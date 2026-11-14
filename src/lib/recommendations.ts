@@ -942,10 +942,18 @@ export function calculateStreak(
     return 0;
   }
 
+  const eligible = new Set(eligibleDates);
   let streak = 0;
   const cursor = new Date(`${startOfTodayIso()}T00:00:00`);
 
-  while (eligibleDates.includes(toLocalIsoDate(cursor))) {
+  // Today is still in progress: a streak that ran through yesterday stays
+  // alive until the day is over. Counting only from today showed "0 days"
+  // every morning to someone on a long streak until they logged something.
+  if (!eligible.has(toLocalIsoDate(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  while (eligible.has(toLocalIsoDate(cursor))) {
     streak += 1;
     cursor.setDate(cursor.getDate() - 1);
   }
