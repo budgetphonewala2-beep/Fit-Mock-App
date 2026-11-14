@@ -38,7 +38,35 @@ needs your Apple / Firebase accounts.
    Apple Developer → Keys). Native sign-in works without them, but the token
    revocation Apple requires when an account is deleted needs them.
 
-## 3. Build
+## 3. Build in the cloud (Codemagic, no Mac needed)
+
+`codemagic.yaml` (repo root) has three workflows on the **Fit-Mock-App**
+Codemagic app:
+
+| Workflow | What it does | Needs |
+|---|---|---|
+| `ios-verify` | Web + Flutter tests, compiles the iOS app (unsigned) | nothing |
+| `ios-testflight` | Same, plus signing, IPA, upload to TestFlight | variables below + app record |
+| `ios-app-store` | Same as TestFlight, then submits for App Review | everything in APP_STORE_SUBMISSION.md §0 |
+
+Variable group **`fitmonk_ios`** (Codemagic → Fit-Mock-App → Environment
+variables; tick *Secure* for each):
+
+| Variable | Value |
+|---|---|
+| `CERTIFICATE_PRIVATE_KEY` | already set (RSA key; backup in `D:\Fitmock\ios-signing\`) |
+| `APP_STORE_CONNECT_ISSUER_ID` | App Store Connect → Users and Access → Integrations → App Store Connect API → Issuer ID |
+| `APP_STORE_CONNECT_KEY_IDENTIFIER` | the key's Key ID (role **Admin** or **App Manager**) |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | full text of the downloaded `AuthKey_<KeyID>.p8` |
+| `QONVERSION_PROJECT_KEY` | Qonversion project key |
+| `GOOGLE_SERVICE_INFO_PLIST` | `base64` of `GoogleService-Info.plist` (Windows: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("GoogleService-Info.plist"))`) |
+
+First signed run: `ios-testflight` registers `app.fitmonk.shell`, enables Push
++ Sign in with Apple, creates the distribution certificate and profile, and
+builds the IPA. Then create the app in App Store Connect (Apps → + → New App →
+pick `app.fitmonk.shell`) and run `ios-testflight` again to upload.
+
+## 4. Build on a Mac (alternative)
 
 ```bash
 cd mobile

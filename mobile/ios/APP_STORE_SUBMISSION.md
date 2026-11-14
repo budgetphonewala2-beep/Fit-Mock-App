@@ -14,7 +14,8 @@ Apple developer news, November 2026.
    changes must be in production before review: Sign in with Apple, real
    StoreKit paywall, AI consent sheet, legal pages, native speech.
 2. **Build with Xcode 26 / iOS 26 SDK or later.** Required for every upload
-   since 28 April 2026.
+   since 28 April 2026. Codemagic's `xcode: latest` covers this. Builds run
+   on Codemagic, see [`README.md`](README.md) §3.
 3. **Qonversion key set** in `mobile/env.json` and all 6 subscriptions
    approved for sale (or submitted with the build). The paywall must show
    real store prices.
