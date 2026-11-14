@@ -1,0 +1,22 @@
+# Upload only what the Next.js web app needs. Vercel keeps its own env vars,
+# so local .env files must never be uploaded.
+.env*
+!.env.example
+node_modules
+.next
+mobile
+play-store
+scripts
+Alex Workout Videos
+video-uploads
+Videos
+Warmup videos
+*.zip
+/*.png
+/*.svg
+/*.pdf
+/*.html
+/*.mp4
+/*.webm
+.claude
+codemagic.yaml

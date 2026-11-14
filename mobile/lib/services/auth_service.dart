@@ -33,7 +33,7 @@ class AuthService {
       // exception that the plugin re-raises, killing the app.
       throw AuthError(
         'not_configured',
-        'Google sign-in isn\'t available on iPhone yet. Tap "Use demo mode" to continue.',
+        'Google sign-in is being set up for iPhone. Please try again after the next app update.',
       );
     }
     // signIn() shows the account picker; silent flows are the wrong call here
