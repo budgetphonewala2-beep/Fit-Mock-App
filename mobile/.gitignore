@@ -41,3 +41,6 @@ ios/Flutter/flutter_export_environment.sh
 ios/Pods/
 ios/Podfile.lock
 ios/.symlinks/
+
+# Kotlin daemon sessions
+android/.kotlin/

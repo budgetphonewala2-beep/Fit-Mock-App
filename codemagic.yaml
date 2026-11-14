@@ -153,7 +153,7 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 90
     integrations:
-      app_store_connect: codemagic
+      app_store_connect: App Store Connect API key
     environment: *ios_env
     scripts:
       - *verify_web
@@ -176,7 +176,7 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 90
     integrations:
-      app_store_connect: codemagic
+      app_store_connect: App Store Connect API key
     environment: *ios_env
     scripts:
       - *verify_web
