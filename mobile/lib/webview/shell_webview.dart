@@ -208,10 +208,21 @@ class _ShellWebViewState extends State<ShellWebView>
     final uri = action.request.url;
     if (uri == null) return NavigationActionPolicy.ALLOW;
 
-    // Route mailto/tel/sms and other schemes to the OS.
-    if (!(uri.scheme == 'http' || uri.scheme == 'https' || uri.scheme == 'about')) {
+    // Only top-level navigations are "leaving the app". iOS reports every
+    // iframe load here too (Android doesn't): Firebase Auth's hidden
+    // firebaseapp.com iframe, video embeds, payment widgets. Kicking those to
+    // Safari opened the browser on its own at startup and broke the page.
+    if (action.isForMainFrame == false) return NavigationActionPolicy.ALLOW;
+
+    // In-page schemes stay in the WebView.
+    const inPage = {'http', 'https', 'about', 'blob', 'data', 'javascript'};
+    if (!inPage.contains(uri.scheme)) {
+      // mailto:, tel:, sms:, itms-apps:, whatsapp: … go to the OS.
       unawaited(_openExternal(uri));
       return NavigationActionPolicy.CANCEL;
+    }
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      return NavigationActionPolicy.ALLOW;
     }
 
     final parsed = Uri.tryParse(uri.rawValue);
@@ -221,6 +232,27 @@ class _ShellWebViewState extends State<ShellWebView>
     }
 
     return NavigationActionPolicy.ALLOW;
+  }
+
+  /// `target="_blank"` links and `window.open`. Without a handler iOS drops
+  /// them silently (legal-page links, Calendly, store links did nothing).
+  /// Same rule as navigation: our own pages open in place, anything else in
+  /// the OS browser. Never creates a second WebView.
+  Future<bool> _onCreateWindow(
+    InAppWebViewController controller,
+    CreateWindowAction action,
+  ) async {
+    final uri = action.request.url;
+    if (uri == null || uri.rawValue.isEmpty || uri.scheme == 'about') return false;
+    final parsed = Uri.tryParse(uri.rawValue);
+    if ((uri.scheme == 'http' || uri.scheme == 'https') &&
+        parsed != null &&
+        Env.isInternalUrl(parsed)) {
+      await controller.loadUrl(urlRequest: URLRequest(url: uri));
+    } else if (uri.scheme != 'blob' && uri.scheme != 'data' && uri.scheme != 'javascript') {
+      unawaited(_openExternal(uri));
+    }
+    return false;
   }
 
   /// Retry after a failed load. A failed *first* load never commits a URL,
@@ -329,8 +361,12 @@ class _ShellWebViewState extends State<ShellWebView>
                       ScrollViewContentInsetAdjustmentBehavior.NEVER,
                   isInspectable: kDebugMode,
                   useOnShowFileChooser: true,
+                  // Route target=_blank / window.open through onCreateWindow.
+                  supportMultipleWindows: true,
+                  javaScriptCanOpenWindowsAutomatically: true,
                 ),
                 onShowFileChooser: _onShowFileChooser,
+                onCreateWindow: _onCreateWindow,
                 onWebViewCreated: (controller) {
                   _controller = controller;
                   WebChannel.instance.attach(controller);

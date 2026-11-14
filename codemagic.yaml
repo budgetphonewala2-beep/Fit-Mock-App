@@ -59,14 +59,7 @@ definitions:
           echo "WARNING: QONVERSION_PROJECT_KEY is not set. In-app purchases will be"
           echo "WARNING: disabled in this build (paywall shows 'unavailable')."
         fi
-        cat > env.json <<EOF
-        {
-          "FITMONK_SHELL_URL": "${FITMONK_SHELL_URL}",
-          "QONVERSION_PROJECT_KEY": "${QONVERSION_PROJECT_KEY:-}",
-          "DEBUG_BRIDGE": "false"
-        }
-        EOF
-
+        GOOGLE_IOS_CLIENT_ID=""
         PLIST="ios/Runner/GoogleService-Info.plist"
         if [ -n "${GOOGLE_SERVICE_INFO_PLIST:-}" ]; then
           echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > "$PLIST"
@@ -76,6 +69,7 @@ definitions:
             exit 1
           fi
           REVERSED=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" "$PLIST")
+          GOOGLE_IOS_CLIENT_ID=$(/usr/libexec/PlistBuddy -c "Print :CLIENT_ID" "$PLIST")
           echo "GOOGLE_REVERSED_CLIENT_ID = $REVERSED" > ios/Flutter/GoogleSignIn.xcconfig
           # Add the plist to the Runner target's bundle resources.
           ruby -e '
@@ -97,6 +91,15 @@ definitions:
           # a placeholder one.
           /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" ios/Runner/Info.plist || true
         fi
+
+        cat > env.json <<EOF
+        {
+          "FITMONK_SHELL_URL": "${FITMONK_SHELL_URL}",
+          "QONVERSION_PROJECT_KEY": "${QONVERSION_PROJECT_KEY:-}",
+          "GOOGLE_IOS_CLIENT_ID": "${GOOGLE_IOS_CLIENT_ID}",
+          "DEBUG_BRIDGE": "false"
+        }
+        EOF
 
         # Store builds must use the production APNs environment.
         /usr/libexec/PlistBuddy -c "Set :aps-environment production" ios/Runner/Runner.entitlements

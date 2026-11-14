@@ -16,6 +16,14 @@ class Env {
 
   static const bool debugBridge = bool.fromEnvironment('DEBUG_BRIDGE');
 
+  /// iOS OAuth client id (CLIENT_ID in GoogleService-Info.plist). Without it
+  /// Google Sign-In on iOS has no configuration, and the plugin re-raises
+  /// GIDSignIn's exception, which crashes the app. CI fills it from the plist.
+  static const String googleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+    defaultValue: '',
+  );
+
   static const List<String> allowedHosts = [
     'fitmonk.online',
     'www.fitmonk.online',
