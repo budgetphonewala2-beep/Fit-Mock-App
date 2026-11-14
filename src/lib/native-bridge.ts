@@ -47,6 +47,41 @@ export interface EntitlementsPayload {
   entitlements: Record<string, EntitlementSnapshot>;
 }
 
+export interface StoreProduct {
+  /** Qonversion product id (what `purchases.purchase` takes). */
+  id: string;
+  /** App Store product id / Play product id. */
+  storeId?: string | null;
+  /** Play base plan id (Android only). */
+  basePlanId?: string | null;
+  /** Localized price string from the store, e.g. "₹1,499.00". */
+  prettyPrice?: string | null;
+  type?: string;
+}
+
+export interface StoreProductsPayload {
+  /** False when the shell has no billing set up (no Qonversion key). */
+  available: boolean;
+  products: Record<string, StoreProduct>;
+}
+
+/**
+ * Error codes the shell returns for purchases. `purchase_cancelled` is the
+ * user closing the App Store / Play sheet; it is not a failure to show.
+ */
+export type PurchaseErrorCode =
+  | "purchase_cancelled"
+  | "purchase_pending"
+  | "purchase_failed"
+  | "purchases_unavailable"
+  | "product_not_found";
+
+export function bridgeErrorCode(error: unknown): string | null {
+  return typeof error === "object" && error !== null && "code" in error
+    ? String((error as { code: unknown }).code)
+    : null;
+}
+
 export interface DeviceInfo {
   platform: string;
   app: {
@@ -72,6 +107,16 @@ export interface GoogleSignInResult {
   email?: string | null;
   displayName?: string | null;
   photoUrl?: string | null;
+}
+
+export interface AppleSignInResult {
+  idToken: string;
+  /** The unhashed nonce; Firebase needs it to verify the Apple token. */
+  rawNonce: string;
+  authorizationCode?: string | null;
+  email?: string | null;
+  /** Only present on the user's first Apple authorization. */
+  displayName?: string | null;
 }
 
 export interface RemoteNotification {
@@ -153,6 +198,17 @@ export const nativeBridge = {
   purchases: {
     async getOfferings(): Promise<unknown> {
       return (await raw()?.request("purchases.getOfferings")) ?? null;
+    },
+    async getProducts(): Promise<StoreProductsPayload> {
+      const r = raw();
+      if (!r) return { available: false, products: {} };
+      try {
+        const result = (await r.request("purchases.getProducts")) as StoreProductsPayload | null;
+        return result ?? { available: false, products: {} };
+      } catch {
+        // Older shells don't know this method.
+        return { available: false, products: {} };
+      }
     },
     async getEntitlements(): Promise<EntitlementsPayload> {
       const result = await raw()?.request("purchases.getEntitlements");
@@ -306,6 +362,11 @@ export const nativeBridge = {
     async googleSignIn(): Promise<GoogleSignInResult | null> {
       const result = await raw()?.request("auth.googleSignIn");
       return (result as GoogleSignInResult) ?? null;
+    },
+    /** Sign in with Apple (iOS shell only). `null` outside the shell. */
+    async appleSignIn(): Promise<AppleSignInResult | null> {
+      const result = await raw()?.request("auth.appleSignIn");
+      return (result as AppleSignInResult) ?? null;
     },
     googleSignOut() {
       return raw()?.request("auth.googleSignOut") ?? Promise.resolve();

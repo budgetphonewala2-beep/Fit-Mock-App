@@ -1,14 +1,24 @@
-import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:convert';
+import 'dart:io' show Platform;
+import 'dart:math';
 
-/// Native Google Sign-In used inside the WebView shell. The web bridge calls
-/// `auth.googleSignIn`, we run the native flow, then hand back the id token so
-/// the web app can complete the sign-in with `signInWithCredential`.
+import 'package:crypto/crypto.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+import '../bridge/bridge_error.dart';
+
+/// Native sign-in used inside the WebView shell. The web bridge calls
+/// `auth.googleSignIn` / `auth.appleSignIn`, we run the native flow, then hand
+/// back the id token so the web app can finish with `signInWithCredential`.
 class AuthService {
   AuthService._();
   static final AuthService instance = AuthService._();
 
   // scopes: default email+profile is enough for Firebase Auth's
   // GoogleAuthProvider.credential(idToken, accessToken).
+  // On iOS the client id comes from GoogleService-Info.plist (CLIENT_ID); on
+  // Android from google-services.json.
   final GoogleSignIn _google = GoogleSignIn();
 
   Future<Map<String, Object?>> signInGoogle() async {
@@ -35,12 +45,65 @@ class AuthService {
   Future<void> signOutGoogle() async {
     await _google.signOut();
   }
+
+  /// Sign in with Apple (iOS only). App Store Review Guideline 4.8 requires
+  /// it whenever Google sign-in is offered. Firebase needs the *raw* nonce
+  /// back, while Apple is given its SHA-256, so both travel to the web side.
+  Future<Map<String, Object?>> signInApple() async {
+    if (!Platform.isIOS) {
+      throw AuthError('unsupported', 'Sign in with Apple is only available on iOS.');
+    }
+    final rawNonce = _randomNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+    final AuthorizationCredentialAppleID credential;
+    try {
+      credential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw AuthError('cancelled', 'Sign-in cancelled by the user.');
+      }
+      throw AuthError('apple_failed', e.message);
+    }
+
+    final idToken = credential.identityToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw AuthError('no_id_token', 'Apple did not return an identity token.');
+    }
+
+    // Apple only sends the name on the very first authorization.
+    final name = [credential.givenName, credential.familyName]
+        .whereType<String>()
+        .where((part) => part.trim().isNotEmpty)
+        .join(' ');
+
+    return {
+      'idToken': idToken,
+      'rawNonce': rawNonce,
+      'authorizationCode': credential.authorizationCode,
+      'email': credential.email,
+      'displayName': name.isEmpty ? null : name,
+    };
+  }
+
+  String _randomNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
+  }
 }
 
-class AuthError implements Exception {
-  AuthError(this.code, this.message);
-  final String code;
-  final String message;
+class AuthError extends BridgeError {
+  AuthError(super.code, super.message);
+
   @override
   String toString() => 'AuthError($code): $message';
 }

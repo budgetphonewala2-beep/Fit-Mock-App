@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 /**
  * Close-on-back for full-screen overlays.
@@ -22,7 +22,10 @@ export function useHardwareBackClose(open: boolean, onClose: () => void) {
   // its own marker off the stack, which delivered a popstate to the freshly-
   // attached handler and closed the overlay a beat after it opened.
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  // Refs must not be written during render; sync it right after each commit.
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open || typeof window === "undefined") return;

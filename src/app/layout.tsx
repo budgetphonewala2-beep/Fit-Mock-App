@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Hanken_Grotesk, Archivo, Urbanist } from "next/font/google";
 import { DietFitProvider } from "@/components/providers/dietfit-provider";
+import { AiConsentSheet } from "@/components/ai-consent-sheet";
 import "./globals.css";
 
 // CSS variable names kept as --font-manrope/--font-space-grotesk (matching
@@ -65,7 +66,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <DietFitProvider>{children}</DietFitProvider>
+        <DietFitProvider>
+          {children}
+          <AiConsentSheet />
+        </DietFitProvider>
       </body>
     </html>
   );

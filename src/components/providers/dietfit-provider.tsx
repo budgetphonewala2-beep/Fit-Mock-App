@@ -12,6 +12,9 @@ import {
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { createFirebaseAuth, createFirebaseDb } from "@/lib/firebase-browser";
+import { nativeBridge, type EntitlementsPayload } from "@/lib/native-bridge";
+import { activeTierFromEntitlements } from "@/lib/store-billing";
+import { aiFetch } from "@/lib/ai-consent";
 import { incrementChallengeParticipants } from "@/lib/challenge-stats";
 import {
   FIREBASE_REMOTE_LOAD_TIMEOUT_MS,
@@ -699,6 +702,33 @@ export function DietFitProvider({ children }: { children: React.ReactNode }) {
     };
   }, [firebaseRemoteSynced, firebaseUserId, hydrated, state]);
 
+  // In the app, an active store entitlement unlocks its tier: at launch
+  // (subscription bought on another device, or before a reinstall) and
+  // whenever the store pushes an update (a pending UPI / Ask to Buy payment
+  // that just cleared, a renewal, an upgrade).
+  useEffect(() => {
+    if (!nativeBridge.isNative) {
+      return;
+    }
+    const apply = (payload: EntitlementsPayload | null | undefined) => {
+      const tier = activeTierFromEntitlements(payload);
+      if (!tier) {
+        return;
+      }
+      setState((previous) =>
+        previous.subscriptionTier === tier && previous.paywallCompleted
+          ? previous
+          : deriveState({
+              ...previous,
+              subscriptionTier: tier,
+              paywallCompleted: previous.onboardingCompleted ? true : previous.paywallCompleted,
+            }),
+      );
+    };
+    nativeBridge.purchases.getEntitlements().then(apply).catch(() => null);
+    return nativeBridge.on("purchases.entitlementsChanged", apply);
+  }, []);
+
   useEffect(() => {
     const auth = createFirebaseAuth();
 
@@ -710,6 +740,13 @@ export function DietFitProvider({ children }: { children: React.ReactNode }) {
     return onAuthStateChanged(auth, (user) => {
       activeFirebaseUserId.current = user?.uid ?? null;
       dispatchRemoteGate({ type: "auth-changed", userId: user?.uid ?? null });
+
+      // Tie App Store / Play purchases to the Fitmonk account, so the plan
+      // follows the user across devices and reinstalls. Sign-out already
+      // calls purchases.logout().
+      if (user && nativeBridge.isNative) {
+        void nativeBridge.purchases.identify(user.uid).catch(() => null);
+      }
 
       if (!user?.email) {
         return;
@@ -856,7 +893,7 @@ export function DietFitProvider({ children }: { children: React.ReactNode }) {
 
     {
       try {
-        const response = await fetch("/api/meal", {
+        const response = await aiFetch("/api/meal", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

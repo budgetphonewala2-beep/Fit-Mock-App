@@ -17,7 +17,13 @@ export function detectStoreHost(userAgent: string | null | undefined): StoreHost
   if (!userAgent || !userAgent.includes("FitmonkShell")) {
     return "web";
   }
-  if (/iPhone|iPad|iPod/.test(userAgent)) {
+  // Shell 1.0.6+ states its platform outright. Older builds don't, and an
+  // iPad in desktop mode sends a "Macintosh" UA with no iOS marker.
+  const declared = /FitmonkPlatform\/(ios|android)/.exec(userAgent)?.[1];
+  if (declared) {
+    return declared === "ios" ? "appleStore" : "googlePlay";
+  }
+  if (/iPhone|iPad|iPod|Macintosh/.test(userAgent)) {
     return "appleStore";
   }
   return "googlePlay";

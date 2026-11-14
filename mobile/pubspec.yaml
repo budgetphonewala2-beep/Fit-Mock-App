@@ -1,7 +1,7 @@
 name: fitmonk_shell
 description: FitMonk native shell wrapping the production web app.
 publish_to: 'none'
-version: 1.0.5+6
+version: 1.0.6+7
 
 environment:
   sdk: ^3.5.0
@@ -46,6 +46,10 @@ dependencies:
   image_picker: ^1.2.4
 
   cupertino_icons: ^1.0.8
+  sign_in_with_apple: ^8.2.0
+  crypto: ^3.0.8
+  timezone: ^0.9.4
+  speech_to_text: ^7.5.0
 
 dev_dependencies:
   flutter_lints: ^4.0.0
@@ -54,16 +58,19 @@ dev_dependencies:
   # regenerated on demand, so they only run when the source PNGs change.
   flutter_launcher_icons: ^0.14.1
   flutter_native_splash: ^2.4.1
+  flutter_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true
 
 # Regenerate with: dart run flutter_launcher_icons
-# iOS icon is generated manually against the current AppIcon.appiconset
-# layout — the generator expects legacy filenames. See mobile/ios/README.md.
 flutter_launcher_icons:
   android: "ic_launcher"
-  ios: false
+  ios: true
+  # App Store rejects icons with transparency.
+  remove_alpha_ios: true
+  background_color_ios: "#0c2723"
   image_path: "assets/icons/app-icon.png"
   # Adaptive icon (Android 8+): the mark sits on the brand-teal ground so
   # it survives the OS's circle/rounded-square/squircle mask.
@@ -79,7 +86,7 @@ flutter_launcher_icons:
 flutter_native_splash:
   color: "#0e4b45"
   image: "assets/icons/splash.png"
-  ios: false
+  ios: true
   android_12:
     color: "#0e4b45"
     image: "assets/icons/splash.png"

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 // (individual) is currently the responsible party. Before App Store / Play
 // submission with real billing, register an entity and swap ENTITY, and have
 // this reviewed by counsel (India: DPDP Act compliance is the priority).
-const EFFECTIVE_DATE = "30 October 2026";
+const EFFECTIVE_DATE = "14 November 2026";
 const ENTITY = "Fitmonk";
 const JURISDICTION = "India";
 const CONTACT_EMAIL = "contact@fitmonk.online";
@@ -48,9 +48,11 @@ export default function PrivacyPage() {
           <li>
             <strong>Account information:</strong> when you sign in with
             Google, we receive your email address, display name, and profile
-            photo URL from your Google account. You can instead use demo mode,
-            which stores everything locally in your browser and requires no
-            account.
+            photo URL from your Google account. When you use Sign in with
+            Apple (iOS), we receive the email address you choose to share
+            (which may be a private relay address) and, the first time only,
+            the name you provide. You can instead use demo mode, which stores
+            everything locally on your device and requires no account.
           </li>
           <li>
             <strong>Onboarding answers:</strong> your fitness goal, experience
@@ -142,7 +144,9 @@ export default function PrivacyPage() {
         </ul>
         <p>
           We do not sell your personal information. We do not use your data
-          for cross-context behavioral advertising.
+          for cross-context behavioral advertising, and we do not track you
+          across other companies&rsquo; apps or websites: the app does not
+          read your device&rsquo;s advertising identifier.
         </p>
       </LegalSection>
 
@@ -158,7 +162,9 @@ export default function PrivacyPage() {
             See <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase&rsquo;s privacy page</a>.
           </li>
           <li>
-            <strong>OpenAI:</strong> meal descriptions you type, meal photos
+            <strong>OpenAI (third-party AI):</strong> only after you tap
+            &ldquo;Allow AI features&rdquo; in the app, and only while that
+            setting is on (Profile &rarr; AI features). Meal descriptions you type, meal photos
             you analyse, coach messages and the photos you attach to them, and
             workout-planning context are sent to OpenAI&rsquo;s API
             to generate nutrition estimates, coach replies, and workout
@@ -204,7 +210,11 @@ export default function PrivacyPage() {
           your profile, logs, progress, and Coach chats from Firestore, except where we must keep
           records for legal or accounting reasons (for example, subscription
           receipts), in which case we keep only what is required, for as
-          long as required, and delete the rest.
+          long as required, and delete the rest. If you signed in with
+          Apple, deleting your account also revokes Fitmonk&rsquo;s access to
+          your Apple ID. Active App Store or Google Play subscriptions are
+          not cancelled by deleting your account; cancel them in your
+          store&rsquo;s subscription settings.
         </p>
       </LegalSection>
 
@@ -222,8 +232,8 @@ export default function PrivacyPage() {
           <strong>EEA/UK residents:</strong> the legal bases we rely on are
           performance of our contract with you (to deliver the app),
           legitimate interests (product improvement and abuse prevention),
-          consent (push notifications, optional analytics), and legal
-          obligation.
+          consent (AI features, push notifications, optional analytics), and
+          legal obligation.
         </p>
         <p>
           <strong>California residents:</strong> we do not sell your personal

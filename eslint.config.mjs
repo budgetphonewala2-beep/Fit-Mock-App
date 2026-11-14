@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Flutter shell (Dart) and its generated build output.
+    "mobile/**",
   ]),
 ]);
 

@@ -24,12 +24,12 @@ describe("needsFreshSignIn", () => {
 
 describe("deletionErrorMessage", () => {
   it("explains picking the wrong Google account", () => {
-    expect(deletionErrorMessage({ code: "auth/user-mismatch" })).toContain("different Google account");
+    expect(deletionErrorMessage({ code: "auth/user-mismatch" })).toContain("different account");
   });
 
   it("treats a closed popup or cancelled native picker as not confirmed", () => {
     for (const code of ["cancelled", "auth/popup-closed-by-user", "auth/cancelled-popup-request"]) {
-      expect(deletionErrorMessage({ code })).toBe("Confirm with Google to delete your account.");
+      expect(deletionErrorMessage({ code })).toBe("Confirm with Google or Apple to delete your account.");
     }
   });
 

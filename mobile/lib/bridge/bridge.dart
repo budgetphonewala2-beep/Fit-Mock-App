@@ -2,12 +2,14 @@ import 'package:flutter/foundation.dart';
 
 import '../config/env.dart';
 import '../services/analytics_service.dart';
+import 'bridge_error.dart';
 import '../services/auth_service.dart';
 import '../services/device_service.dart';
 import '../services/haptics_service.dart';
 import '../services/notifications_service.dart';
 import '../services/permissions_service.dart';
 import '../services/purchases_service.dart';
+import '../services/speech_service.dart';
 import '../services/startup.dart';
 
 typedef BridgeHandler = Future<Object?> Function(Map<String, dynamic> params);
@@ -47,6 +49,8 @@ class Bridge {
     // ---- Purchases (Qonversion) -----------------------------------------
     _handlers['purchases.getOfferings'] = (_) =>
         PurchasesService.instance.getOfferings();
+    _handlers['purchases.getProducts'] = (_) =>
+        PurchasesService.instance.getProducts();
     _handlers['purchases.getEntitlements'] = (_) =>
         PurchasesService.instance.getEntitlements();
     _handlers['purchases.purchase'] = (p) =>
@@ -121,8 +125,24 @@ class Bridge {
     // ---- Auth ------------------------------------------------------------
     _handlers['auth.googleSignIn'] = (_) =>
         AuthService.instance.signInGoogle();
+    _handlers['auth.appleSignIn'] = (_) =>
+        AuthService.instance.signInApple();
     _handlers['auth.googleSignOut'] = (_) async {
       await AuthService.instance.signOutGoogle();
+      return null;
+    };
+
+    // ---- Speech (iOS: replaces the WebView's broken Web Speech API) -----
+    _handlers['speech.start'] = (p) => SpeechService.instance.start(
+          sessionId: (p['sessionId'] as num).toInt(),
+          lang: p['lang'] as String?,
+        );
+    _handlers['speech.stop'] = (_) async {
+      await SpeechService.instance.stop();
+      return null;
+    };
+    _handlers['speech.abort'] = (_) async {
+      await SpeechService.instance.abort();
       return null;
     };
 
@@ -161,7 +181,7 @@ class Bridge {
       return result;
     } catch (e, s) {
       debugPrint('[bridge] ✗ $method: $e\n$s');
-      if (e is AuthError) return _error(e.code, e.message);
+      if (e is BridgeError) return _error(e.code, e.message);
       return _error('handler_failed', e.toString());
     }
   }

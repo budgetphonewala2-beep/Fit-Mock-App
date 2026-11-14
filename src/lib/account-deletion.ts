@@ -3,8 +3,11 @@
 import { deleteUser, type User } from "firebase/auth";
 import { deleteDoc, doc } from "firebase/firestore";
 import {
+  canSignInWithApple,
   createFirebaseAuth,
   createFirebaseDb,
+  isAppleUser,
+  reauthenticateAndRevokeApple,
   reauthenticateWithGoogle,
 } from "@/lib/firebase-browser";
 
@@ -25,10 +28,10 @@ export function deletionErrorMessage(error: unknown) {
     typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
 
   if (code === "auth/user-mismatch") {
-    return "That's a different Google account. Pick the one you signed in with.";
+    return "That's a different account. Pick the one you signed in with.";
   }
   if (CANCELLED_CODES.has(code)) {
-    return "Confirm with Google to delete your account.";
+    return "Confirm with Google or Apple to delete your account.";
   }
   return "Couldn't delete your account. Try again, or email contact@fitmonk.online and we'll do it for you.";
 }
@@ -54,7 +57,12 @@ export async function deleteFirebaseAccount() {
     return;
   }
 
-  if (needsFreshSignIn(user)) {
+  if (isAppleUser(user) && canSignInWithApple()) {
+    // Always for Apple accounts: the revocation Apple requires on deletion
+    // needs a fresh authorization code, and this also counts as the recent
+    // sign-in Firebase wants.
+    await reauthenticateAndRevokeApple(auth, user);
+  } else if (needsFreshSignIn(user)) {
     await reauthenticateWithGoogle(user);
   }
 

@@ -5,14 +5,15 @@ class PermissionsService {
   static final PermissionsService instance = PermissionsService._();
 
   static const Map<String, ph.Permission> _map = {
-    // No photos or location: the manifest doesn't declare them (see
-    // AndroidManifest.xml), so asking would only ever come back denied.
+    // Only what the app actually uses and both platforms declare
+    // (AndroidManifest.xml + Info.plist usage strings + the PERMISSION_*
+    // macros in ios/Podfile). Contacts, bluetooth, motion, photos and
+    // location were listed before but never declared, so they could only
+    // ever come back denied, and Apple rejects builds that link permission
+    // APIs without a matching usage string.
     'camera': ph.Permission.camera,
     'microphone': ph.Permission.microphone,
     'notifications': ph.Permission.notification,
-    'contacts': ph.Permission.contacts,
-    'bluetooth': ph.Permission.bluetoothConnect,
-    'motion': ph.Permission.sensors,
   };
 
   Future<Map<String, Object?>> request(String name) async {

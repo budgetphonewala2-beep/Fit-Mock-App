@@ -1,0 +1,10 @@
+// Google Sign-In URL scheme for iOS.
+//
+// Replace the value below with REVERSED_CLIENT_ID from
+// ios/Runner/GoogleService-Info.plist (download it from the Firebase console
+// after registering the iOS app with bundle id app.fitmonk.shell).
+// It looks like: com.googleusercontent.apps.892922968455-xxxxxxxxxxxx
+//
+// Until it is set, Google sign-in on iOS opens the picker but cannot return
+// to the app. Sign in with Apple and everything else work without it.
+GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.REPLACE_ME

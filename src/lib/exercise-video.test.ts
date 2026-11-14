@@ -9,8 +9,9 @@ describe("exercise video lookup", () => {
   it("has a clip for every warm-up move on every day", () => {
     for (const focus of FOCUSES) {
       for (let slot = 1; slot <= 4; slot += 1) {
+        // Core day has its own re-filmed set under warmup/core-day/.
         expect(findExerciseVideo(`warmup-${focus}-${slot}-preset`, undefined), `${focus} ${slot}`)
-          .toMatch(/\/videos\/warmup\/[a-z0-9-]+\.mp4$/);
+          .toMatch(/\/videos\/warmup\/(?:[a-z0-9-]+\/)?[a-z0-9-]+\.mp4$/);
       }
     }
   });
@@ -25,14 +26,15 @@ describe("exercise video lookup", () => {
     ];
 
     for (const [id, clip] of filmed) {
-      expect(findExerciseVideo(id, undefined)).toMatch(new RegExp(`/warmup/${clip}\\.mp4$`));
+      expect(findExerciseVideo(id, undefined)).toMatch(
+        new RegExp(`/warmup/(?:[a-z0-9-]+/)?${clip}\\.mp4$`),
+      );
     }
   });
 
   it("reuses one clip for a move shared across days", () => {
-    expect(findExerciseVideo("warmup-back-2-preset", undefined)).toBe(
-      findExerciseVideo("warmup-core-1-preset", undefined),
-    );
+    // (Bird Dog on back vs core day no longer applies: core day was
+    // re-filmed and has its own clip set.)
     expect(findExerciseVideo("warmup-shoulders-2-preset", undefined)).toBe(
       findExerciseVideo("warmup-chest-2-preset", undefined),
     );

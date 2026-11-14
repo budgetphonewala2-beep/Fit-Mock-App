@@ -101,7 +101,7 @@ function Features() {
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="max-w-2xl">
           <p className="font-display text-overline uppercase tracking-[0.14em] text-mint-600">
-            What's inside
+            What&apos;s inside
           </p>
           <h2 className="mt-3 font-display text-[32px] font-extrabold leading-[1.08] tracking-tight text-ink-900 text-balance sm:text-[40px]">
             Everything the plan needs. Nothing else.
@@ -140,7 +140,7 @@ function Showcase() {
           </h2>
           <p className="mt-6 max-w-lg text-body-l text-sand-100/78">
             Ten quick questions and Fitmonk shows the exact plan built for you: daily calories, training split, and
-            the version of you it's aiming at.
+            the version of you it&apos;s aiming at.
           </p>
           <ul className="mt-8 space-y-4 text-body-m text-sand-100/82">
             <li className="flex items-start gap-3">

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
+		<key>CFBundleDevelopmentRegion</key>
+		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleDisplayName</key>
+		<string>Fitmonk</string>
+		<key>CFBundleExecutable</key>
+		<string>$(EXECUTABLE_NAME)</string>
+		<key>CFBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+		<key>CFBundleName</key>
+		<string>Fitmonk</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>$(FLUTTER_BUILD_NAME)</string>
+		<key>CFBundleSignature</key>
+		<string>????</string>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<!-- Google Sign-In: the reversed iOS client id from GoogleService-Info.plist
+	     (REVERSED_CLIENT_ID). Set GOOGLE_REVERSED_CLIENT_ID in
+	     ios/Flutter/GoogleSignIn.xcconfig - see mobile/ios/README.md. -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+				</array>
+			</dict>
+		</array>
+		<!-- Lets url_launcher check and open these schemes. -->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>https</string>
+			<string>mailto</string>
+			<string>tel</string>
+			<string>sms</string>
+		</array>
+		<key>LSRequiresIPhoneOS</key>
+		<true/>
+		<!-- Only standard HTTPS/TLS: no custom crypto, so no export compliance
+	     questionnaire on every TestFlight upload. -->
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
+		<!-- Usage strings for everything the app (or the WebView) can ask for.
+	     A missing string crashes the app the moment iOS would prompt. -->
+		<key>NSCameraUsageDescription</key>
+		<string>Fitmonk uses the camera so you can snap a photo of your meal and log it.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Fitmonk uses the microphone so you can log meals and talk to your coach by voice.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>Fitmonk turns what you say into text to log meals and chat with your coach.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Fitmonk lets you choose a meal or progress photo from your library.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>Fitmonk saves your streak and progress cards to your photo library when you ask it to.</string>
+		<!-- FCM: wake for silent pushes. -->
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>remote-notification</string>
+		</array>
+		<!-- Firebase swizzles the APNs delegate methods so FCM gets the token. -->
+		<key>FirebaseAppDelegateProxyEnabled</key>
+		<true/>
+		<!-- App Transport Security: fitmonk.online is HTTPS, so keep ATS locked. -->
+		<key>NSAppTransportSecurity</key>
+		<dict>
+			<key>NSAllowsArbitraryLoads</key>
+			<false/>
+		</dict>
+		<key>UIApplicationSceneManifest</key>
+		<dict>
+			<key>UIApplicationSupportsMultipleScenes</key>
+			<false/>
+			<key>UISceneConfigurations</key>
+			<dict>
+				<key>UIWindowSceneSessionRoleApplication</key>
+				<array>
+					<dict>
+						<key>UISceneClassName</key>
+						<string>UIWindowScene</string>
+						<key>UISceneConfigurationName</key>
+						<string>flutter</string>
+						<key>UISceneDelegateClassName</key>
+						<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+						<key>UISceneStoryboardFile</key>
+						<string>Main</string>
+					</dict>
+				</array>
+			</dict>
+		</dict>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UIMainStoryboardFile</key>
+		<string>Main</string>
+		<!-- iPhone only (TARGETED_DEVICE_FAMILY = 1): the web app is a portrait
+	     phone layout, matching Android. -->
+		<key>UISupportedInterfaceOrientations</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+		</array>
+	
+		<key>UIStatusBarStyle</key>
+		<string>UIStatusBarStyleDefault</string>
+		<key>UIViewControllerBasedStatusBarAppearance</key>
+		<true/>
+		<key>UIStatusBarHidden</key>
+		<false/>
+	</dict>
+</plist>

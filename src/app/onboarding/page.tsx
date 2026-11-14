@@ -35,8 +35,10 @@ import { Btn, Foot, Frame, Label, ScrollPicker, Seg, Tile } from "@/components/o
 import { Screen, ScreenBody, ScreenFooter, ScreenGrow } from "@/components/ui/screen";
 import { hasFirebaseEnv } from "@/lib/env";
 import {
+  canSignInWithApple,
   createFirebaseAuth,
   createGoogleAuthProvider,
+  signInWithAppleNative,
   signInWithGoogleNative,
 } from "@/lib/firebase-browser";
 import { nativeBridge } from "@/lib/native-bridge";
@@ -149,7 +151,14 @@ export default function OnboardingPage() {
     useDietFit();
 
   const [screenIdx, setScreenIdx] = useState(0);
-  const [googleLoadingIntent, setGoogleLoadingIntent] = useState<"new" | "existing" | null>(null);
+  const [googleLoadingIntent, setGoogleLoadingIntent] = useState<
+    "new" | "existing" | "apple" | null
+  >(null);
+  // iOS app only, decided after mount so server and client render match.
+  const [appleAvailable, setAppleAvailable] = useState(false);
+  useEffect(() => {
+    setAppleAvailable(canSignInWithApple());
+  }, []);
   const [authStatus, setAuthStatus] = useState("");
 
   const [name, setName] = useState("");
@@ -211,6 +220,34 @@ export default function OnboardingPage() {
         signInError instanceof Error
           ? signInError.message
           : "Google sign-in could not be completed.",
+      );
+    } finally {
+      setGoogleLoadingIntent(null);
+    }
+  }
+
+  // Works for new and returning users alike: a returning user's saved plan
+  // loads after sign-in and the effect below moves them on to the app.
+  async function handleAppleSignIn() {
+    setAuthStatus("");
+    const auth = hasFirebaseEnv() ? createFirebaseAuth() : null;
+    if (!auth) {
+      goNext();
+      return;
+    }
+
+    setGoogleLoadingIntent("apple");
+    try {
+      const result = await signInWithAppleNative(auth);
+      setName(getGoogleProfileName(result.user.displayName, result.user.email));
+      signInFirebase(result.user.email);
+      goNext();
+    } catch (signInError) {
+      if (getFirebaseErrorCode(signInError) === "cancelled") return;
+      setAuthStatus(
+        signInError instanceof Error
+          ? signInError.message
+          : "Sign in with Apple could not be completed.",
       );
     } finally {
       setGoogleLoadingIntent(null);
@@ -381,6 +418,16 @@ export default function OnboardingPage() {
           <ScreenGrow />
         </ScreenBody>
         <ScreenFooter>
+          {appleAvailable ? (
+            <Btn
+              variant="brand"
+              onClick={handleAppleSignIn}
+              disabled={googleLoadingIntent !== null}
+              icon={googleLoadingIntent === "apple" ? <LoaderCircle className="fm-spin" /> : undefined}
+            >
+              {googleLoadingIntent === "apple" ? "Opening Apple..." : "Continue with Apple"}
+            </Btn>
+          ) : null}
           <Btn
             variant="brand"
             onClick={handleGetStarted}

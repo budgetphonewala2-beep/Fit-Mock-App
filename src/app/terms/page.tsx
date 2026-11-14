@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 // (individual) is currently the responsible party. Before App Store / Play
 // submission with real billing, register an entity and swap ENTITY, and have
 // this reviewed by counsel (India: consumer-law + IT-rules review).
-const EFFECTIVE_DATE = "20 September 2026";
+const EFFECTIVE_DATE = "14 November 2026";
 const ENTITY = "Fitmonk";
 const JURISDICTION = "India";
 const CONTACT_EMAIL = "contact@fitmonk.online";
@@ -46,8 +46,10 @@ export default function TermsPage() {
       <LegalSection heading="2. Your account">
         <p>
           You can use Fitmonk in demo mode without an account. If you sign in
-          with Google, you&rsquo;re responsible for keeping your Google account
-          secure. Tell us right away at{" "}
+          with Google or Apple, you&rsquo;re responsible for keeping that
+          account secure. You can delete your Fitmonk account at any time from
+          Profile in the app or at{" "}
+          <Link href="/delete-account">fitmonk.online/delete-account</Link>. Tell us right away at{" "}
           <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> if you
           believe your account has been accessed without your permission.
         </p>
@@ -92,7 +94,11 @@ export default function TermsPage() {
           incorrect, incomplete, or outdated, especially for nutrition
           numbers and exercise guidance. Always apply your own judgment, and
           consult a professional for anything that matters. Do not rely on
-          AI output for medical, legal, or financial decisions.
+          AI output for medical, legal, or financial decisions. AI features
+          are optional: they run only after you allow them, and you can turn
+          them off in Profile at any time. See our{" "}
+          <Link href="/privacy">Privacy Policy</Link> for what is shared with
+          our AI provider.
         </p>
       </LegalSection>
 
@@ -105,10 +111,20 @@ export default function TermsPage() {
         <ul>
           <li>
             <strong>Mobile purchases</strong> are billed by Apple App Store
-            or Google Play under their terms. Manage or cancel your
-            subscription in your device&rsquo;s account settings, not
-            inside Fitmonk. Deleting the app does not cancel your
-            subscription.
+            or Google Play under their terms. Plans are Starter, Pro and
+            Elite, each billed every 3 months or every year at the price
+            shown on the paywall before you confirm.
+          </li>
+          <li>
+            <strong>Auto-renewal.</strong> Payment is charged to your Apple
+            ID or Google account when you confirm the purchase. Your
+            subscription renews automatically unless auto-renew is turned
+            off at least 24 hours before the end of the current period, and
+            your account is charged for renewal within 24 hours before the
+            end of the current period. Manage or cancel your subscription in
+            your App Store or Google Play account settings, not inside
+            Fitmonk. Deleting the app or your Fitmonk account does not cancel
+            your subscription.
           </li>
           <li>
             <strong>Refunds</strong> are handled by the store you purchased
@@ -118,7 +134,8 @@ export default function TermsPage() {
           <li>
             <strong>Trials, if offered,</strong> will convert to a paid
             subscription at the end of the trial unless you cancel at least
-            24 hours before it ends.
+            24 hours before it ends. Any unused portion of a free trial is
+            forfeited when you purchase a subscription.
           </li>
           <li>
             <strong>Price changes</strong> take effect at your next renewal.
@@ -244,8 +261,64 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection heading="16. Contact">
+      <LegalSection heading="16. Additional terms for Apple users">
         <p>
+          If you downloaded Fitmonk from the Apple App Store, the following
+          also applies:
+        </p>
+        <ul>
+          <li>
+            These terms are between you and {ENTITY} only, not Apple. {ENTITY},
+            not Apple, is solely responsible for the app and its content.
+          </li>
+          <li>
+            Your licence to use the app is limited to a non-transferable
+            licence to use it on Apple-branded products you own or control, as
+            permitted by the Usage Rules in the Apple Media Services Terms and
+            Conditions.
+          </li>
+          <li>
+            {ENTITY} is solely responsible for maintenance and support of the
+            app (contact {CONTACT_EMAIL}). Apple has no obligation to provide
+            any maintenance or support.
+          </li>
+          <li>
+            If the app fails to conform to any applicable warranty, you may
+            notify Apple and Apple will refund the purchase price (if any) for
+            the app. To the maximum extent permitted by law, Apple has no other
+            warranty obligation with respect to the app.
+          </li>
+          <li>
+            {ENTITY}, not Apple, is responsible for addressing any claims by
+            you or a third party relating to the app, including product
+            liability claims, claims that the app fails to meet any legal or
+            regulatory requirement, and consumer protection or privacy claims.
+          </li>
+          <li>
+            If a third party claims the app or your use of it infringes their
+            intellectual property rights, {ENTITY}, not Apple, is solely
+            responsible for the investigation, defence, settlement and
+            discharge of that claim.
+          </li>
+          <li>
+            You confirm that you are not located in a country subject to a
+            U.S. Government embargo or designated as a &ldquo;terrorist
+            supporting&rdquo; country, and that you are not on any U.S.
+            Government list of prohibited or restricted parties.
+          </li>
+          <li>
+            You must comply with applicable third-party terms (for example,
+            your mobile carrier&rsquo;s) when using the app.
+          </li>
+          <li>
+            Apple and its subsidiaries are third-party beneficiaries of these
+            terms and, once you accept them, Apple has the right to enforce
+            them against you as a third-party beneficiary.
+          </li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection heading="17. Contact">        <p>
           {ENTITY}
           <br />
           Governed by the laws of {JURISDICTION}

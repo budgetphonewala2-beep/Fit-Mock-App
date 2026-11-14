@@ -4194,7 +4194,7 @@ function WorkoutPageContent() {
                   </div>
                   <p className="mt-5 text-[12px] font-medium text-mint-medium">Session complete</p>
                   <p className="mt-1 text-[26px] font-medium tracking-[-0.02em]">Great work!</p>
-                  <p className="mt-2 text-[13px] leading-5 text-white/60">You finished today's session. Rest up and come back stronger.</p>
+                  <p className="mt-2 text-[13px] leading-5 text-white/60">You finished today&apos;s session. Rest up and come back stronger.</p>
                   <div className="mt-6 grid grid-cols-2 gap-2">
                     <div className="rounded-chip bg-white/10 px-3 py-3">
                       <p className="text-[11px] font-medium text-white/55">Duration</p>
@@ -6909,7 +6909,7 @@ function WorkoutPageContent() {
               onClick={() => { setShowFocusChangeWarning(false); setPendingFocusChange(null); }}
             />
             <div className="glass-sheet glass-ui relative w-full max-w-sm rounded-hero p-5">
-              <h3 className="text-[19px] font-medium tracking-[-0.02em] text-foreground">Change today's focus?</h3>
+              <h3 className="text-[19px] font-medium tracking-[-0.02em] text-foreground">Change today&apos;s focus?</h3>
               <p className="mt-2 text-[14px] leading-[1.5] text-foreground/60">
                 {selectedWorkoutEnvironment === "home"
                   ? "Your home workout session is in progress. Switching focus will change your exercises but won't reset your timer."

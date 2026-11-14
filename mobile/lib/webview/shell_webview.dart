@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
@@ -63,6 +64,7 @@ class _ShellWebViewState extends State<ShellWebView>
 
   Future<void> _prepareBootstrap() async {
     final info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
     setState(() {
       _bootstrapJs = bridgeBootstrapFor(
         platform: Platform.isIOS ? 'ios' : 'android',
@@ -221,6 +223,19 @@ class _ShellWebViewState extends State<ShellWebView>
     return NavigationActionPolicy.ALLOW;
   }
 
+  /// Retry after a failed load. A failed *first* load never commits a URL,
+  /// so `reload()` would just reload about:blank (iOS) — go back to the app.
+  Future<void> _retry() async {
+    final controller = _controller;
+    if (controller == null) return;
+    final current = await controller.getUrl();
+    if (current == null || current.scheme == 'about' || current.toString().isEmpty) {
+      await controller.loadUrl(urlRequest: URLRequest(url: WebUri(Env.shellUrl)));
+    } else {
+      await controller.reload();
+    }
+  }
+
   Future<void> _openExternal(WebUri uri) async {
     final parsed = Uri.tryParse(uri.rawValue);
     if (parsed == null) return;
@@ -279,6 +294,17 @@ class _ShellWebViewState extends State<ShellWebView>
               InAppWebView(
                 initialUrlRequest: URLRequest(url: WebUri(Env.shellUrl)),
                 pullToRefreshController: _pullToRefresh,
+                // Installed before any page script runs, so the web app sees
+                // window.FitmonkBridge on its very first render instead of
+                // only after onLoadStop (which fires after hydration and
+                // made the first paint take the web-only code paths).
+                initialUserScripts: UnmodifiableListView<UserScript>([
+                  UserScript(
+                    source: _bootstrapJs!,
+                    injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+                    forMainFrameOnly: true,
+                  ),
+                ]),
                 initialSettings: InAppWebViewSettings(
                   javaScriptEnabled: true,
                   transparentBackground: true,
@@ -287,7 +313,20 @@ class _ShellWebViewState extends State<ShellWebView>
                   useShouldOverrideUrlLoading: true,
                   supportZoom: false,
                   useHybridComposition: true,
-                  applicationNameForUserAgent: 'FitmonkShell/1.0',
+                  // The platform token lets the server pick the right store
+                  // wording on first paint. iPadOS asks for desktop sites by
+                  // default (a "Macintosh" UA with no "iPad"), so force the
+                  // mobile content mode too.
+                  applicationNameForUserAgent:
+                      'FitmonkShell/1.0 FitmonkPlatform/${Platform.isIOS ? 'ios' : 'android'}',
+                  preferredContentMode: UserPreferredContentMode.MOBILE,
+                  // iOS: edge-swipe to go back, the native equivalent of the
+                  // Android back button handled in PopScope below.
+                  allowsBackForwardNavigationGestures: true,
+                  // iOS: keep the WebView from adding its own safe-area inset
+                  // on top of the SafeArea this widget already applies.
+                  contentInsetAdjustmentBehavior:
+                      ScrollViewContentInsetAdjustmentBehavior.NEVER,
                   isInspectable: kDebugMode,
                   useOnShowFileChooser: true,
                 ),
@@ -316,6 +355,7 @@ class _ShellWebViewState extends State<ShellWebView>
                   );
                 },
                 onLoadStart: (_, __) {
+                  WebChannel.instance.markPageLoading();
                   if (mounted) {
                     setState(() {
                       _loading = true;
@@ -325,12 +365,21 @@ class _ShellWebViewState extends State<ShellWebView>
                 },
                 onLoadStop: (controller, url) async {
                   _pullToRefresh?.endRefreshing();
+                  // Fallback for documents the user script missed; the
+                  // bootstrap is idempotent.
                   await controller.evaluateJavascript(source: _bootstrapJs!);
+                  await WebChannel.instance.markPageReady();
                   if (mounted) setState(() => _loading = false);
                 },
                 onReceivedError: (controller, request, error) {
                   _pullToRefresh?.endRefreshing();
                   if (!(request.isForMainFrame ?? false)) return;
+                  // A navigation we cancelled on purpose (external links
+                  // handed to the OS, a tap that superseded a load) reports
+                  // as an error on iOS (NSURLErrorCancelled, -999). It's not
+                  // a failure, so don't cover the page with the offline
+                  // screen.
+                  if (error.type == WebResourceErrorType.CANCELLED) return;
                   if (mounted) {
                     setState(() {
                       _loading = false;
@@ -356,7 +405,7 @@ class _ShellWebViewState extends State<ShellWebView>
                     child: Center(child: CircularProgressIndicator()),
                   ),
                 ),
-              if (_errored) _ErrorOverlay(onRetry: () => _controller?.reload()),
+              if (_errored) _ErrorOverlay(onRetry: _retry),
             ],
           ),
         ),

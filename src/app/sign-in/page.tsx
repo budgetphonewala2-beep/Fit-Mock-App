@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { LoaderCircle, ShieldCheck } from "lucide-react";
 import { signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { hasFirebaseEnv } from "@/lib/env";
 import {
+  canSignInWithApple,
   createFirebaseAuth,
   createGoogleAuthProvider,
+  signInWithAppleNative,
   signInWithGoogleNative,
 } from "@/lib/firebase-browser";
 import { nativeBridge } from "@/lib/native-bridge";
@@ -33,7 +35,40 @@ export default function SignInPage() {
   const router = useRouter();
   const { signInDemo, signInFirebase } = useDietFit();
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
   const [status, setStatus] = useState("");
+  // Decided after mount: the server render can't know it's the iOS app.
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    setAppleAvailable(canSignInWithApple());
+  }, []);
+
+  async function handleAppleSignIn() {
+    setStatus("");
+    const auth = hasFirebaseEnv() ? createFirebaseAuth() : null;
+    if (!auth) {
+      setStatus("Sign-in isn't available right now. Try demo mode.");
+      return;
+    }
+    setIsLoading(true);
+    setLoadingProvider("apple");
+    try {
+      const result = await signInWithAppleNative(auth);
+      signInFirebase(result.user.email);
+      router.push("/workout");
+    } catch (signInError) {
+      if (getFirebaseErrorCode(signInError) === "cancelled") return;
+      setStatus(
+        signInError instanceof Error
+          ? signInError.message
+          : "Sign in with Apple could not be completed.",
+      );
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  }
 
   async function handleGoogleSignIn() {
     setStatus("");
@@ -53,6 +88,7 @@ export default function SignInPage() {
     }
 
     setIsLoading(true);
+    setLoadingProvider("google");
     try {
       // Inside the Flutter shell Google blocks OAuth in WebViews, so we run
       // the native picker via the bridge instead of a popup/redirect.
@@ -77,6 +113,7 @@ export default function SignInPage() {
       );
     } finally {
       setIsLoading(false);
+      setLoadingProvider(null);
     }
   }
 
@@ -124,14 +161,26 @@ export default function SignInPage() {
       </ScreenBody>
 
       <ScreenFooter>
+        {appleAvailable ? (
+          <Button
+            variant="brand"
+            size="lg"
+            onClick={handleAppleSignIn}
+            disabled={isLoading}
+            className="bg-black text-white hover:bg-black/90"
+          >
+            {loadingProvider === "apple" ? <LoaderCircle className="fm-spin" /> : null}
+            {loadingProvider === "apple" ? "Opening Apple..." : "Continue with Apple"}
+          </Button>
+        ) : null}
         <Button
           variant="brand"
           size="lg"
           onClick={handleGoogleSignIn}
           disabled={isLoading}
         >
-          {isLoading ? <LoaderCircle className="fm-spin" /> : null}
-          {isLoading ? "Opening Google..." : "Continue with Google"}
+          {loadingProvider === "google" ? <LoaderCircle className="fm-spin" /> : null}
+          {loadingProvider === "google" ? "Opening Google..." : "Continue with Google"}
         </Button>
         <Button
           variant="ghost"

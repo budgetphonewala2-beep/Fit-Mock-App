@@ -7,7 +7,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Crown, LoaderCircle, X } from "lucide-react";
 import { useDietFit } from "@/components/providers/dietfit-provider";
-import { nativeBridge } from "@/lib/native-bridge";
+import { bridgeErrorCode, nativeBridge, type StoreProduct } from "@/lib/native-bridge";
+import { activeTierFromEntitlements, productIdFor } from "@/lib/store-billing";
 import {
   formatInr,
   priceFor,
@@ -68,14 +69,9 @@ const TIERS: TierDefinition[] = [
 
 const TIER_RANK: Record<SubscriptionTier, number> = { starter: 0, pro: 1, elite: 2 };
 
-// Qonversion product IDs the shell maps to Play Billing / StoreKit. One per
-// tier; the base plan (quarterly vs yearly) is picked by Qonversion from the
-// product's offering, so we only pass the tier id.
-const PRODUCT_IDS: Record<SubscriptionTier, string> = {
-  starter: "fitmonk_starter",
-  pro: "fitmonk_pro",
-  elite: "fitmonk_elite",
-};
+const PENDING_LINE =
+  "Your payment is pending. Your plan unlocks automatically as soon as the store confirms it.";
+const UNAVAILABLE_LINE = "Subscriptions aren't available right now. Please try again shortly.";
 
 type UpgradeFeature =
   | "diet-plan"
@@ -183,19 +179,11 @@ export default function PaywallClient({ storeHost }: Props) {
   const signupDefault: SubscriptionTier =
     state.profile?.workoutEnvironment === "home" ? "pro" : "elite";
 
-  const [plan, setPlan] = useState<SubscriptionTier>(
-    isUpgrade ? upgradeDefault : signupDefault,
-  );
   // Once the user taps a card, honour that choice even if the profile hydrates
   // later with a value that would otherwise swap the default back under them.
-  const userPickedPlanRef = useRef(false);
-
-  useEffect(() => {
-    if (userPickedPlanRef.current) {
-      return;
-    }
-    setPlan(isUpgrade ? upgradeDefault : signupDefault);
-  }, [isUpgrade, upgradeDefault, signupDefault]);
+  // Until then the selection follows the (possibly still hydrating) default.
+  const [pickedPlan, setPickedPlan] = useState<SubscriptionTier | null>(null);
+  const plan: SubscriptionTier = pickedPlan ?? (isUpgrade ? upgradeDefault : signupDefault);
   const [duration, setDuration] = useState<BillingDuration>("quarterly");
   const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -204,6 +192,26 @@ export default function PaywallClient({ storeHost }: Props) {
   // prefetches, so the first paint of the app reads as a welcome instead of
   // a flash of blank.
   const [welcoming, setWelcoming] = useState(false);
+  // Localized prices from the App Store / Play, keyed by Qonversion product
+  // id. Empty on the web or until the store answers; the INR list prices
+  // show until then.
+  const [storeProducts, setStoreProducts] = useState<Record<string, StoreProduct>>({});
+
+  useEffect(() => {
+    if (!nativeBridge.isNative) {
+      return;
+    }
+    let cancelled = false;
+    nativeBridge.purchases
+      .getProducts()
+      .then((result) => {
+        if (!cancelled && result.available) setStoreProducts(result.products);
+      })
+      .catch(() => null);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!hydrated) {
@@ -272,18 +280,43 @@ export default function PaywallClient({ storeHost }: Props) {
     }
   }
 
+  function completeWithTier(tier: SubscriptionTier) {
+    flushSync(() => {
+      unlockPaywall(tier);
+    });
+    if (isUpgrade) {
+      router.push(returnTo);
+    } else {
+      setWelcoming(true);
+    }
+  }
+
   async function handleRestore() {
     setError(null);
     setRestoreToast(null);
+    if (!nativeBridge.isNative) {
+      setRestoreToast("Restore Purchases works in the Fitmonk app on your phone.");
+      return;
+    }
     try {
       const result = await nativeBridge.purchases.restore();
-      if (result && typeof result === "object" && Object.keys(result).length > 0) {
-        setRestoreToast("Subscription restored.");
-      } else {
-        setRestoreToast("No previous purchases found on this account.");
+      const tier = activeTierFromEntitlements(result);
+      if (!tier) {
+        setRestoreToast("No active subscription found for this Apple ID / Google account.");
+        return;
       }
-    } catch {
-      setRestoreToast("No previous purchases found on this account.");
+      if (isUpgrade && TIER_RANK[tier] <= TIER_RANK[currentTier]) {
+        setRestoreToast(`Your ${tier} plan is already active.`);
+        return;
+      }
+      setRestoreToast("Subscription restored.");
+      completeWithTier(tier);
+    } catch (restoreError) {
+      setRestoreToast(
+        bridgeErrorCode(restoreError) === "purchases_unavailable"
+          ? UNAVAILABLE_LINE
+          : "Couldn't reach the store to restore. Check your connection and try again.",
+      );
     }
   }
 
@@ -294,45 +327,60 @@ export default function PaywallClient({ storeHost }: Props) {
     setPurchasing(true);
     setError(null);
     setRestoreToast(null);
+
+    // The website has no store billing; it keeps the existing open unlock.
+    // Inside the app every plan is bought through the App Store (StoreKit)
+    // or Google Play Billing, and only an active entitlement unlocks it.
+    if (!nativeBridge.isNative) {
+      completeWithTier(selectedTier.v);
+      return;
+    }
+
     try {
-      // Prefer the native billing bridge when the shell exposes it. On web and
-      // in older shells the bridge is a no-op so we fall through to the dev
-      // unlock path, which lets the paywall still complete the signup flow.
-      // When the 1.0.5 shell ships with Qonversion wired, this branch becomes
-      // the real purchase on both platforms.
-      // Prefer the native billing bridge when the shell exposes it. On web
-      // and in older shells the bridge is a no-op, so this returns an empty
-      // payload and we fall through to the dev unlock path. When the 1.0.5
-      // shell ships with Qonversion wired, the bridge return becomes the
-      // real purchase outcome on both platforms.
-      await nativeBridge.purchases
-        .purchase(PRODUCT_IDS[selectedTier.v])
-        .catch(() => null);
-      flushSync(() => {
-        unlockPaywall(selectedTier.v);
-      });
-      if (isUpgrade) {
-        router.push(returnTo);
-      } else {
-        setWelcoming(true);
+      const result = await nativeBridge.purchases.purchase(
+        productIdFor(selectedTier.v, duration),
+      );
+      const tier = activeTierFromEntitlements(result);
+      if (!tier) {
+        setError(
+          "Payment received, but your plan isn't active yet. Tap Restore Purchases in a moment.",
+        );
+        setPurchasing(false);
+        return;
       }
-    } catch {
-      setError("Payment didn't go through. Try again.");
+      completeWithTier(TIER_RANK[tier] >= TIER_RANK[selectedTier.v] ? tier : selectedTier.v);
+    } catch (purchaseError) {
+      const code = bridgeErrorCode(purchaseError);
+      if (code === "purchase_cancelled") {
+        // The user closed the store sheet: nothing to report.
+      } else if (code === "purchase_pending") {
+        setRestoreToast(PENDING_LINE);
+      } else if (code === "purchases_unavailable" || code === "product_not_found") {
+        setError(UNAVAILABLE_LINE);
+      } else {
+        setError("Payment didn't go through. Try again.");
+      }
       setPurchasing(false);
     }
   }
 
+  const storePrice = storeProducts[productIdFor(selectedTier.v, duration)]?.prettyPrice ?? null;
+
   const title = isUpgrade ? featureCopy?.title ?? "Choose your plan" : "Choose your plan";
 
+  // The store's own localized price wins over the INR list price: it's what
+  // the App Store / Play sheet will actually charge in the user's country.
+  const priceLabel = storePrice ?? formatInr(selectedPrice.total);
+
   const ctaLabel = isYearly
-    ? "Start 7-day free trial"
-    : `Start with ${selectedTier.name} · ${formatInr(selectedPrice.total)}/${periodShort}`;
-  const ctaSubLine = isYearly ? `Then ${formatInr(selectedPrice.total)}/yr` : null;
+    ? `Start ${trialDays}-day free trial`
+    : `Start with ${selectedTier.name} · ${priceLabel}/${periodShort}`;
+  const ctaSubLine = isYearly ? `Then ${priceLabel}/yr` : null;
 
   const store = storePhrase(storeHost);
   const renewalLine = isYearly
-    ? `Free for ${trialDays} days, then ${formatInr(selectedPrice.total)} every year until cancelled. Cancel in ${store} before day ${trialDays} to avoid the charge.`
-    : `Renews every 3 months at ${formatInr(selectedPrice.total)} until cancelled. Cancel anytime in ${store}.`;
+    ? `Free for ${trialDays} days, then ${priceLabel} every year until cancelled. Cancel in ${store} before day ${trialDays} to avoid the charge.`
+    : `Renews every 3 months at ${priceLabel} until cancelled. Cancel anytime in ${store}.`;
 
   return (
     <div
@@ -439,8 +487,7 @@ export default function PaywallClient({ storeHost }: Props) {
             isUpgrade={isUpgrade}
             isRequired={Boolean(featureCopy && tier.v === featureCopy.requiredTier)}
             onSelect={() => {
-              userPickedPlanRef.current = true;
-              setPlan(tier.v);
+              setPickedPlan(tier.v);
             }}
           />
         ))}

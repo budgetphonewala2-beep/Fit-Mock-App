@@ -26,12 +26,12 @@ export default function DeleteAccountPage() {
     >
       <LegalSection heading="Delete it in the app">
         <ol>
-          <li>Open Fitmonk and sign in with the Google account you use for it.</li>
+          <li>Open Fitmonk and sign in with the Google or Apple account you use for it.</li>
           <li>Go to your profile (the avatar at the top of the Challenges screen).</li>
           <li>Scroll to the bottom and tap <strong>Delete account</strong>.</li>
           <li>
-            Confirm. Google may ask you to pick your account again to make sure
-            it&rsquo;s you.
+            Confirm. Google or Apple may ask you to confirm your account again to
+            make sure it&rsquo;s you.
           </li>
         </ol>
         <p>Your account and data are deleted straight away and you&rsquo;re signed out.</p>
@@ -43,7 +43,8 @@ export default function DeleteAccountPage() {
           <a href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20Fitmonk%20account`}>
             {CONTACT_EMAIL}
           </a>{" "}
-          from the Google account you signed in with, with the subject
+          from the email address on your Fitmonk account (for Sign in with Apple,
+          the address Apple shared with us), with the subject
           &ldquo;Delete my Fitmonk account&rdquo;. We&rsquo;ll delete it within
           30 days and reply to confirm.
         </p>
@@ -51,7 +52,7 @@ export default function DeleteAccountPage() {
 
       <LegalSection heading="What gets deleted">
         <ul>
-          <li>Your account and Google sign-in link with Fitmonk</li>
+          <li>Your account and its Google or Apple sign-in link with Fitmonk (for Apple, we also revoke Fitmonk&rsquo;s access to your Apple ID)</li>
           <li>Your profile: goal, body metrics, diet preferences and injuries</li>
           <li>Your plan, meal logs, workout logs, water logs and readiness check-ins</li>
           <li>Your Coach chats, including any photos you attached</li>

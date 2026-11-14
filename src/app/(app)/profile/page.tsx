@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+
+// The bridge never changes after the page loads.
+const subscribeNever = () => () => {};
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   CalendarClock,
   CalendarDays,
   ChevronRight,
+  CreditCard,
   Crown,
   Dumbbell,
   FileText,
@@ -38,6 +42,7 @@ import {
 import { deleteFirebaseAccount, deletionErrorMessage } from "@/lib/account-deletion";
 import { createFirebaseAuth } from "@/lib/firebase-browser";
 import { nativeBridge } from "@/lib/native-bridge";
+import { getAiConsent, setAiConsent, subscribeAiConsent } from "@/lib/ai-consent";
 import { getCycleTargetWeightKg, getGoalCycle } from "@/lib/goal-cycle";
 import { cn, startOfTodayIso } from "@/lib/utils";
 import { formatInr, priceFor } from "@/lib/pricing";
@@ -137,6 +142,14 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const aiConsent = useSyncExternalStore(subscribeAiConsent, getAiConsent, () => null);
+  // Store links only make sense inside the app. The server snapshot is
+  // `false`, so hydration matches and the client then reads the bridge.
+  const isNativeApp = useSyncExternalStore(
+    subscribeNever,
+    () => nativeBridge.isNative,
+    () => false,
+  );
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   // Workout-days sheet: mirrors the picker on the workout tab so training days
@@ -674,6 +687,57 @@ export default function ProfilePage() {
           )}
         </div>
 
+        {/* ── AI features & subscription ── */}
+        <div className="glass mt-3 overflow-hidden rounded-[22px]">
+          <div className="divide-y divide-foreground/8">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={aiConsent === "granted"}
+              onClick={() => setAiConsent(aiConsent === "granted" ? "declined" : "granted")}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-foreground/4"
+            >
+              <Sparkles className="h-4 w-4 shrink-0 text-foreground/45" />
+              <span className="flex-1">
+                <span className="block text-[13.5px] text-foreground">AI features</span>
+                <span className="block text-[11px] leading-[1.4] text-foreground/45">
+                  Meal, photo and Coach analysis by OpenAI
+                </span>
+              </span>
+              <span
+                className={cn(
+                  "relative h-6 w-10 shrink-0 rounded-full transition",
+                  aiConsent === "granted" ? "bg-primary-strong" : "bg-foreground/20",
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
+                    aiConsent === "granted" ? "left-[18px]" : "left-0.5",
+                  )}
+                />
+              </span>
+            </button>
+            {isNativeApp ? (
+              <button
+                type="button"
+                onClick={() =>
+                  void nativeBridge.device.openExternal(
+                    nativeBridge.platform === "ios"
+                      ? "https://apps.apple.com/account/subscriptions"
+                      : "https://play.google.com/store/account/subscriptions",
+                  )
+                }
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-foreground/4"
+              >
+                <CreditCard className="h-4 w-4 shrink-0 text-foreground/45" />
+                <span className="flex-1 text-[13.5px] text-foreground">Manage subscription</span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-foreground/30" />
+              </button>
+            ) : null}
+          </div>
+        </div>
+
         {/* ── Legal ── */}
         <div className="glass mt-3 overflow-hidden rounded-[22px]">
           <div className="flex items-center gap-2 px-3.5 pt-3.5 text-[15px] font-medium text-foreground">
@@ -712,7 +776,7 @@ export default function ProfilePage() {
             <LogOut className="h-4 w-4 shrink-0 text-red-500/70" />
             <div className="flex-1">
               <p className="text-[13px] font-semibold text-red-600/80">{signingOut ? "Signing out…" : "Sign out"}</p>
-              <p className="text-[11px] text-foreground/45">You'll need to sign in again to continue</p>
+              <p className="text-[11px] text-foreground/45">You&apos;ll need to sign in again to continue</p>
             </div>
           </button>
           <button
@@ -762,8 +826,9 @@ export default function ProfilePage() {
               and Coach chats. It can&apos;t be undone.
             </p>
             <p className="mt-2 text-[12px] leading-[1.5] text-foreground/50">
-              You may be asked to confirm with Google first. A subscription bought through
-              Google Play isn&apos;t cancelled by this; cancel it in the Play Store.
+              You may be asked to confirm with Google or Apple first. A subscription bought
+              through the App Store or Google Play isn&apos;t cancelled by this; cancel it in
+              your store&apos;s subscription settings.
             </p>
             {deleteError ? (
               <p className="mt-3 text-[12px] leading-[1.45] text-red-600/80">{deleteError}</p>

@@ -43,6 +43,7 @@ import { getGoalCycle } from "@/lib/goal-cycle";
 import type { MealRecipeItem } from "@/lib/meal-plan-engine";
 import { clamp, cn, isProTier, startOfTodayIso } from "@/lib/utils";
 import { nativeBridge } from "@/lib/native-bridge";
+import { aiFetch, isAiConsentDeclined } from "@/lib/ai-consent";
 import { renderFirstMealShareCard } from "@/lib/share-cards";
 import { firstMealShareText } from "@/lib/share-text";
 import { ensureMicPermission, micBlockedMessage, openMicSettings } from "@/lib/mic-permission";
@@ -1069,7 +1070,7 @@ export default function DietPage() {
 
     void (async () => {
       try {
-        const response = await fetch("/api/meal-plan/suggest", {
+        const response = await aiFetch("/api/meal-plan/suggest", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1317,7 +1318,7 @@ export default function DietPage() {
 
     try {
       const mealType = inferMealTypeForCurrentTime();
-      const response = await fetch("/api/meal-photo", {
+      const response = await aiFetch("/api/meal-photo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1365,7 +1366,9 @@ export default function DietPage() {
         unrecognizedSegments: payload.unrecognizedSegments,
       });
     } catch (error) {
-      console.error("Meal photo analysis failed.", error);
+      if (!isAiConsentDeclined(error)) {
+        console.error("Meal photo analysis failed.", error);
+      }
       setPhotoMealError(
         error instanceof Error
           ? error.message
@@ -1390,7 +1393,7 @@ export default function DietPage() {
     const mealType = inferMealTypeForCurrentTime();
 
     try {
-      const response = await fetch("/api/meal", {
+      const response = await aiFetch("/api/meal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rawText: text, mealType }),

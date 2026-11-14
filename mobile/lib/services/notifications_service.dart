@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import '../bridge/web_channel.dart';
 
@@ -50,8 +51,35 @@ class NotificationsService {
       },
     );
 
+    // A tap on a local notification that launched the app from a killed
+    // state doesn't go through onDidReceiveNotificationResponse.
+    try {
+      final launch = await _local.getNotificationAppLaunchDetails();
+      final response = launch?.notificationResponse;
+      if ((launch?.didNotificationLaunchApp ?? false) && response != null) {
+        _tapController.add({
+          'source': 'local',
+          'coldStart': true,
+          'payload': response.payload,
+          'actionId': response.actionId,
+        });
+      }
+    } catch (e) {
+      debugPrint('getNotificationAppLaunchDetails failed: $e');
+    }
+
     // ---- Firebase Messaging (remote) ------------------------------------
     try {
+      // iOS hides remote notifications while the app is in the foreground
+      // unless told otherwise. Android never auto-shows them in foreground;
+      // the web app gets 'notification.received' on both.
+      await FirebaseMessaging.instance
+          .setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
       FirebaseMessaging.onMessage.listen((message) {
         WebChannel.instance.emit(
           'notification.received',
@@ -110,6 +138,20 @@ class NotificationsService {
 
   Future<Map<String, Object?>> getFcmToken() async {
     try {
+      // iOS: FCM can't mint a token until APNs has handed one over, and
+      // getToken() throws `apns-token-not-set` if asked too early.
+      if (Platform.isIOS) {
+        String? apns;
+        for (var i = 0; i < 10 && apns == null; i++) {
+          apns = await FirebaseMessaging.instance.getAPNSToken();
+          if (apns == null) {
+            await Future<void>.delayed(const Duration(milliseconds: 500));
+          }
+        }
+        if (apns == null) {
+          return {'token': null, 'error': 'apns_token_unavailable'};
+        }
+      }
       final token = await FirebaseMessaging.instance.getToken();
       return {'token': token};
     } catch (e) {
@@ -139,19 +181,26 @@ class NotificationsService {
     required int epochMillis,
     String? payload,
   }) async {
-    // Delegated to a plain delayed .show — full zonedSchedule adds a
-    // timezone dependency. Callers wanting cross-boot persistence should
-    // schedule server-side and deliver via FCM.
+    // Scheduled with the OS (AlarmManager / UNUserNotificationCenter), so it
+    // fires even if the app is suspended or killed. The trigger is an absolute
+    // instant, so UTC is exact and no timezone database is needed. Inexact
+    // on Android: no SCHEDULE_EXACT_ALARM permission, Doze may shift it a
+    // few minutes.
     final id = epochMillis.remainder(1 << 31);
-    final delay = Duration(
-      milliseconds: epochMillis - DateTime.now().millisecondsSinceEpoch,
-    );
-    if (delay.isNegative) {
+    if (epochMillis <= DateTime.now().millisecondsSinceEpoch) {
       return showLocal(title: title, body: body, payload: payload);
     }
-    Future.delayed(delay, () {
-      _local.show(id, title, body, _defaultDetails(), payload: payload);
-    });
+    await _local.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.fromMillisecondsSinceEpoch(tz.UTC, epochMillis),
+      _defaultDetails(),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
+    );
     return {'id': id};
   }
 

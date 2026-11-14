@@ -1,0 +1,193 @@
+# Codemagic CI for Fitmonk (Flutter shell in mobile/, Next.js web app at root).
+#
+# Workflows
+#   ios-testflight  Verify web + mobile, build a signed IPA, upload to TestFlight.
+#   ios-app-store   Same build, then submit the uploaded build for App Review.
+#                   Run it only once docs/ios checklist is done
+#                   (mobile/ios/APP_STORE_SUBMISSION.md, section 0).
+#
+# One-time setup in Codemagic (Fit-Mock-App → Environment variables):
+#   group "fitmonk_ios"
+#     CERTIFICATE_PRIVATE_KEY     (secure) RSA key for the distribution cert
+#     QONVERSION_PROJECT_KEY      (secure) Qonversion project key
+#     GOOGLE_SERVICE_INFO_PLIST   (secure) base64 of ios/Runner/GoogleService-Info.plist
+# Team integration: an App Store Connect API key (Admin or App Manager role).
+# The app record for bundle id app.fitmonk.shell must exist in App Store Connect.
+
+definitions:
+  environment: &ios_env
+    groups:
+      - fitmonk_ios
+    vars:
+      BUNDLE_ID: app.fitmonk.shell
+      FITMONK_SHELL_URL: https://www.fitmonk.online/workout
+    flutter: stable
+    xcode: latest
+    cocoapods: default
+    node: 22
+
+  scripts:
+    - &verify_web
+      name: Web app - install, typecheck, unit tests
+      script: |
+        cd "$CM_BUILD_DIR"
+        npm ci --no-audit --no-fund
+        npx tsc --noEmit -p .
+        npm run test
+
+    - &verify_mobile
+      name: Flutter - packages, analyze, tests
+      script: |
+        cd "$CM_BUILD_DIR/mobile"
+        flutter pub get
+        flutter analyze
+        flutter test
+
+    - &app_config
+      name: App config (env.json, Firebase, Google Sign-In)
+      script: |
+        set -euo pipefail
+        cd "$CM_BUILD_DIR/mobile"
+
+        if [ -z "${QONVERSION_PROJECT_KEY:-}" ]; then
+          echo "WARNING: QONVERSION_PROJECT_KEY is not set. In-app purchases will be"
+          echo "WARNING: disabled in this build (paywall shows 'unavailable')."
+        fi
+        cat > env.json <<EOF
+        {
+          "FITMONK_SHELL_URL": "${FITMONK_SHELL_URL}",
+          "QONVERSION_PROJECT_KEY": "${QONVERSION_PROJECT_KEY:-}",
+          "DEBUG_BRIDGE": "false"
+        }
+        EOF
+
+        PLIST="ios/Runner/GoogleService-Info.plist"
+        if [ -n "${GOOGLE_SERVICE_INFO_PLIST:-}" ]; then
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > "$PLIST"
+          PLIST_BUNDLE=$(/usr/libexec/PlistBuddy -c "Print :BUNDLE_ID" "$PLIST")
+          if [ "$PLIST_BUNDLE" != "$BUNDLE_ID" ]; then
+            echo "GoogleService-Info.plist is for $PLIST_BUNDLE, expected $BUNDLE_ID" >&2
+            exit 1
+          fi
+          REVERSED=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" "$PLIST")
+          echo "GOOGLE_REVERSED_CLIENT_ID = $REVERSED" > ios/Flutter/GoogleSignIn.xcconfig
+          # Add the plist to the Runner target's bundle resources.
+          ruby -e '
+            require "xcodeproj"
+            project = Xcodeproj::Project.open("ios/Runner.xcodeproj")
+            target = project.targets.find { |t| t.name == "Runner" }
+            group = project.main_group["Runner"]
+            unless group.files.any? { |f| f.path == "GoogleService-Info.plist" }
+              ref = group.new_file("GoogleService-Info.plist")
+              target.resources_build_phase.add_file_reference(ref)
+              project.save
+            end
+          '
+          echo "Firebase + Google Sign-In configured for iOS."
+        else
+          echo "WARNING: GOOGLE_SERVICE_INFO_PLIST is not set. Firebase (push, analytics)"
+          echo "WARNING: and Google Sign-In will be unavailable on iOS in this build."
+        fi
+
+        # Store builds must use the production APNs environment.
+        /usr/libexec/PlistBuddy -c "Set :aps-environment production" ios/Runner/Runner.entitlements
+
+    - &signing
+      name: iOS signing (bundle id, capabilities, certificate, profile)
+      script: |
+        set -euo pipefail
+        cd "$CM_BUILD_DIR/mobile"
+
+        # Register the bundle id once and keep its capabilities in step with
+        # ios/Runner/Runner.entitlements.
+        BUNDLE_JSON=$(app-store-connect bundle-ids list \
+          --bundle-id-identifier "$BUNDLE_ID" --strict-match-identifier --platform IOS --json)
+        BUNDLE_RES_ID=$(echo "$BUNDLE_JSON" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"] if d else "")')
+        if [ -z "$BUNDLE_RES_ID" ]; then
+          BUNDLE_RES_ID=$(app-store-connect bundle-ids create "$BUNDLE_ID" \
+            --name "Fitmonk" --platform IOS --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+          echo "Registered bundle id $BUNDLE_ID ($BUNDLE_RES_ID)"
+        fi
+        app-store-connect bundle-ids enable-capabilities "$BUNDLE_RES_ID" \
+          --capability "Push Notifications" "Sign In with Apple" || \
+          echo "Capabilities already enabled or not changeable via API; continuing."
+
+        keychain initialize
+        app-store-connect fetch-signing-files "$BUNDLE_ID" \
+          --type IOS_APP_STORE --strict-match-identifier --create \
+          --certificate-key=@env:CERTIFICATE_PRIVATE_KEY
+        keychain add-certificates
+        xcode-project use-profiles
+
+    - &build_ipa
+      name: Build IPA
+      script: |
+        set -euo pipefail
+        cd "$CM_BUILD_DIR/mobile"
+
+        APP_ID=$(app-store-connect apps list --bundle-id-identifier "$BUNDLE_ID" --json \
+          | python3 -c 'import json,os,sys; b=os.environ["BUNDLE_ID"]; print(next((a["id"] for a in json.load(sys.stdin) if a["attributes"]["bundleId"]==b), ""))')
+        if [ -z "$APP_ID" ]; then
+          echo "No App Store Connect app for $BUNDLE_ID. Create it first:" >&2
+          echo "App Store Connect -> Apps -> + New App -> bundle id $BUNDLE_ID" >&2
+          exit 1
+        fi
+        echo "APP_STORE_APP_ID=$APP_ID" >> "$CM_ENV"
+
+        LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_ID" || echo 0)
+        BUILD_NUMBER=$(( ${LATEST:-0} + 1 ))
+        BUILD_NAME=$(grep '^version:' pubspec.yaml | sed -E 's/version: *([0-9.]+).*/\1/')
+        echo "Building $BUILD_NAME ($BUILD_NUMBER)"
+
+        flutter build ipa --release \
+          --build-name="$BUILD_NAME" \
+          --build-number="$BUILD_NUMBER" \
+          --dart-define-from-file=env.json \
+          --export-options-plist=/Users/builder/export_options.plist
+
+workflows:
+  ios-testflight:
+    name: iOS - TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    integrations:
+      app_store_connect: __ASC_INTEGRATION_NAME__
+    environment: *ios_env
+    scripts:
+      - *verify_web
+      - *verify_mobile
+      - *app_config
+      - *signing
+      - *build_ipa
+    artifacts:
+      - mobile/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - mobile/flutter_drive.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+
+  ios-app-store:
+    name: iOS - App Store review
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    integrations:
+      app_store_connect: __ASC_INTEGRATION_NAME__
+    environment: *ios_env
+    scripts:
+      - *verify_web
+      - *verify_mobile
+      - *app_config
+      - *signing
+      - *build_ipa
+    artifacts:
+      - mobile/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: true
+        release_type: MANUAL

@@ -27,6 +27,7 @@ import { IconBadge } from "@/components/glass/icon-badge";
 import { getNutritionForDate, getTodaysSession } from "@/lib/recommendations";
 import { getAdaptedWorkoutSession, getReadinessForDate } from "@/lib/readiness";
 import { cn, isProTier, startOfTodayIso } from "@/lib/utils";
+import { aiFetch } from "@/lib/ai-consent";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import type {
   CoachChatMessage,
@@ -562,7 +563,7 @@ export default function AiChatPage() {
     previousMessages: ChatMessage[];
   }) {
     try {
-      const response = await fetch("/api/coach", {
+      const response = await aiFetch("/api/coach", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

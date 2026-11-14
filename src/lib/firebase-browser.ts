@@ -4,12 +4,15 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   Auth,
   GoogleAuthProvider,
+  OAuthProvider,
   User,
   UserCredential,
   getAuth,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
+  revokeAccessToken,
   signInWithCredential,
+  updateProfile,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { hasFirebaseEnv } from "@/lib/env";
@@ -77,12 +80,69 @@ export async function signInWithGoogleNative(auth: Auth): Promise<UserCredential
   return signInWithCredential(auth, credential);
 }
 
+/** Sign in with Apple is offered only inside the iOS app. */
+export function canSignInWithApple(): boolean {
+  return nativeBridge.isNative && nativeBridge.platform === "ios";
+}
+
+async function appleCredential() {
+  const result = await nativeBridge.auth.appleSignIn();
+  if (!result?.idToken || !result.rawNonce) {
+    throw new Error("Sign in with Apple did not return an identity token.");
+  }
+  const credential = new OAuthProvider("apple.com").credential({
+    idToken: result.idToken,
+    rawNonce: result.rawNonce,
+  });
+  return { result, credential };
+}
+
+/**
+ * Native Sign in with Apple (iOS shell). Apple only shares the user's name
+ * on the very first authorization, so it is saved onto the Firebase profile
+ * right away; later sign-ins come back without it.
+ */
+export async function signInWithAppleNative(auth: Auth): Promise<UserCredential> {
+  const { result, credential } = await appleCredential();
+  const userCredential = await signInWithCredential(auth, credential);
+  if (result.displayName && !userCredential.user.displayName) {
+    await updateProfile(userCredential.user, { displayName: result.displayName }).catch(
+      () => null,
+    );
+  }
+  return userCredential;
+}
+
+export function isAppleUser(user: User) {
+  return user.providerData.some((p) => p.providerId === "apple.com");
+}
+
+/**
+ * For deleting an Apple account: re-confirms the user with Apple (Firebase
+ * needs a recent sign-in) and revokes Fitmonk's Apple tokens, which Apple
+ * requires when an account created with Sign in with Apple is deleted. The
+ * fresh authorization code is what Firebase revokes with.
+ */
+export async function reauthenticateAndRevokeApple(auth: Auth, user: User): Promise<void> {
+  const { result, credential } = await appleCredential();
+  await reauthenticateWithCredential(user, credential);
+  if (result.authorizationCode) {
+    await revokeAccessToken(auth, result.authorizationCode);
+  }
+}
+
 /**
  * Confirms the signed-in user again, which Firebase requires shortly before
  * sensitive actions like deleting the account. Uses the native picker inside
- * the app shell and the Google popup on the web.
+ * the app shell and the Google popup on the web. Apple accounts re-confirm
+ * through Sign in with Apple.
  */
 export async function reauthenticateWithGoogle(user: User): Promise<void> {
+  if (isAppleUser(user) && canSignInWithApple()) {
+    const { credential } = await appleCredential();
+    await reauthenticateWithCredential(user, credential);
+    return;
+  }
   if (nativeBridge.isNative) {
     const result = await nativeBridge.auth.googleSignIn();
     if (!result?.idToken) {

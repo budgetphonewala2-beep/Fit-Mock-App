@@ -536,8 +536,60 @@ const GENERIC_FOOD_WORDS = new Set([
   "cooked",
 ]);
 
+// Quantity and portion words say how much, not what. "100 gram rajma" and
+// "2 bowls rice" must still match Rajma and Rice; counting "gram" or "bowls"
+// as a dish word made every unit-qualified phrase look like a different dish
+// and silently dropped the correct catalog match.
+const MEASURE_WORDS = new Set([
+  "gram",
+  "grams",
+  "gms",
+  "kilo",
+  "kilos",
+  "kilogram",
+  "kilograms",
+  "litre",
+  "litres",
+  "liter",
+  "liters",
+  "bowl",
+  "bowls",
+  "plate",
+  "plates",
+  "katori",
+  "katoris",
+  "cups",
+  "glass",
+  "glasses",
+  "piece",
+  "pieces",
+  "slice",
+  "slices",
+  "serving",
+  "servings",
+  "portion",
+  "portions",
+  "spoon",
+  "spoons",
+  "tbsp",
+  "tablespoon",
+  "tablespoons",
+  "teaspoon",
+  "teaspoons",
+  "handful",
+  "small",
+  "medium",
+  "large",
+  "half",
+  "full",
+  "some",
+  "little",
+]);
+
 function wordsOf(text: string) {
-  return (text.toLowerCase().match(/[a-z]+/g) ?? []).filter((word) => word.length >= 4);
+  return (text.toLowerCase().match(/[a-z]+/g) ?? []).filter(
+    (word) => word.length >= 4 && !MEASURE_WORDS.has(word),
+  );
 }
 
 // Keeps a catalog match only when the user's phrase and the catalog item name

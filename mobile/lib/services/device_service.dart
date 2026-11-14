@@ -3,7 +3,6 @@ import 'dart:io' show Platform;
 import 'dart:typed_data';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
