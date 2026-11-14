@@ -1,4 +1,5 @@
-﻿import 'dart:async';
+import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:qonversion_flutter/qonversion_flutter.dart';
@@ -6,6 +7,7 @@ import 'package:qonversion_flutter/qonversion_flutter.dart';
 import '../bridge/bridge_error.dart';
 import '../bridge/web_channel.dart';
 import '../config/env.dart';
+import 'ios_store_service.dart';
 
 /// In-app subscriptions through the platform's own billing: StoreKit (App
 /// Store) on iOS and Google Play Billing on Android. Qonversion sits on top
@@ -24,7 +26,12 @@ class PurchasesService {
 
   bool get isAvailable => _initialized;
 
+  // iOS goes straight to StoreKit 2 (IosStoreService); Android keeps Play
+  // Billing through Qonversion.
+  static final bool _ios = Platform.isIOS;
+
   Future<void> init() async {
+    if (_ios) return IosStoreService.instance.init();
     if (_initialized) return;
     const key = Env.qonversionProjectKey;
     if (key.isEmpty) {
@@ -64,6 +71,7 @@ class PurchasesService {
   }
 
   Future<Map<String, Object?>> getOfferings() async {
+    if (_ios) return {'main': null, 'available': const <Object>[]};
     if (!_initialized) return {'main': null, 'available': const <Object>[]};
     // Kept for older web builds; the paywall now uses getProducts.
     // ignore: deprecated_member_use
@@ -78,6 +86,7 @@ class PurchasesService {
   /// keyed by Qonversion product id. The paywall shows these prices so the
   /// amount on screen always matches what the store sheet will charge.
   Future<Map<String, Object?>> getProducts() async {
+    if (_ios) return IosStoreService.instance.getProducts();
     if (!_initialized) return {'available': false, 'products': const <String, Object>{}};
     final products = await Qonversion.getSharedInstance().products();
     return {
@@ -87,6 +96,7 @@ class PurchasesService {
   }
 
   Future<Map<String, Object?>> getEntitlements() async {
+    if (_ios) return IosStoreService.instance.getEntitlements();
     if (!_initialized) return {'entitlements': const <String, Object>{}};
     final entitlements =
         await Qonversion.getSharedInstance().checkEntitlements();
@@ -94,6 +104,7 @@ class PurchasesService {
   }
 
   Future<Map<String, Object?>> purchase(String productId) async {
+    if (_ios) return IosStoreService.instance.purchase(productId);
     _requireInitialized();
     final q = Qonversion.getSharedInstance();
     final products = await q.products();
@@ -128,17 +139,20 @@ class PurchasesService {
   }
 
   Future<Map<String, Object?>> restore() async {
+    if (_ios) return IosStoreService.instance.restore();
     _requireInitialized();
     final entitlements = await Qonversion.getSharedInstance().restore();
     return _entitlementsToJson(entitlements);
   }
 
   Future<void> identify(String userId) async {
+    if (_ios) return; // StoreKit purchases belong to the Apple ID.
     if (!_initialized) return;
     await Qonversion.getSharedInstance().identify(userId);
   }
 
   Future<void> logout() async {
+    if (_ios) return;
     if (!_initialized) return;
     await Qonversion.getSharedInstance().logout();
   }
