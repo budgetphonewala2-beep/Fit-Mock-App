@@ -127,14 +127,13 @@ definitions:
             --name "Fitmonk" --platform IOS --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
           echo "Registered bundle id $BUNDLE_ID ($BUNDLE_RES_ID)"
         fi
-        # Note: Apple only enables Sign In with Apple when a consent setting is
-        # sent, which this CLI doesn't do. It was enabled once directly through
-        # the App Store Connect API (APPLE_ID_AUTH + PRIMARY_APP_CONSENT); on a
-        # brand-new bundle id, enable it in the Developer portal before the
-        # first signed build.
-        app-store-connect bundle-ids enable-capabilities "$BUNDLE_RES_ID" \
-          --capability "Push Notifications" "Sign In with Apple" || \
-          echo "Capabilities already enabled or not changeable via API; continuing."
+        # Capabilities (Push Notifications, Sign In with Apple, In-App Purchase)
+        # are already enabled on the bundle id. They are NOT re-applied here:
+        # re-enabling a capability invalidates the existing provisioning
+        # profile, which made every build mint a new one. On a brand-new
+        # bundle id, enable them once in the Developer portal (Sign In with
+        # Apple needs its "primary app" consent setting, which this CLI can't
+        # send).
 
         keychain initialize
         app-store-connect fetch-signing-files "$BUNDLE_ID" \
