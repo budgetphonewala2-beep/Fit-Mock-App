@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "892922968455",
+    "project_id": "dietfit-f1353",
+    "storage_bucket": "dietfit-f1353.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:892922968455:android:f4baf7264b84cb934d7b22",
+        "android_client_info": {
+          "package_name": "app.fitmonk.fitmonk_shell"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "892922968455-q68lor9lajpp97unuai7hneuse3ccp8j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.fitmonk.fitmonk_shell",
+            "certificate_hash": "786e2344941d713860bf37f21ecf17b8532d4c5b"
+          }
+        },
+        {
+          "client_id": "892922968455-8os1kvgm4gndo19s3d6p8rambberpe43.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRTbyY5JWglE-JZpoDM8mGKw8BYvjEvDs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "892922968455-8os1kvgm4gndo19s3d6p8rambberpe43.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

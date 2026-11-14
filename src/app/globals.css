@@ -1,0 +1,1285 @@
+@import "tailwindcss";
+
+:root {
+  /* App is designed light-only; declare it so mobile browsers don't apply
+     their auto-dark ("force dark") algorithm and mangle the palette. */
+  color-scheme: light;
+
+  /* Fitmonk brand palette — same tokens as src/styles/fitmonk-onboarding.css,
+     promoted here so the whole app (not just onboarding/paywall) shares one
+     design language. */
+  --background: #f5f1e8;
+  --foreground: #0c2723;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-strong: #ffffff;
+  --border: rgba(12, 39, 35, 0.1);
+  --muted: #5c6b67;
+  --primary: #15857a;
+  --primary-strong: #0e4b45;
+  --accent: #f2843a;
+  --accent-soft: #fef0e3;
+  --sun: #fabb8c;
+  --forest: #1fa383;
+  --brand: #37c9a6;
+  --shadow: 0 20px 48px rgba(7, 48, 44, 0.14);
+
+  /* ── Full color ramps ─────────────────────────────────────────────
+     Promoted from .fm-theme so every screen (in-app + onboarding +
+     celebrations) resolves colors through one source of truth. */
+  --teal-950: #07302c;   /* deepest — shared with --teal-stage */
+  --teal-900: #0e4b45;   /* same as --primary-strong */
+  --teal-800: #135b53;
+  --teal-700: #15857a;   /* same as --primary */
+  --teal-600: #22887b;
+  --teal-500: #2ba191;
+
+  --mint-700: #15856a;
+  --mint-600: #1fa383;   /* same as --forest */
+  --mint-500: #37c9a6;   /* same as --brand */
+  --mint-400: #5cd7b9;   /* same as --mint-medium */
+  --mint-300: #8ae4cf;
+  --mint-200: #bcf0e2;
+  --mint-100: #e2f8f1;
+
+  --orange-700: #c5631f;
+  --orange-600: #e0742a;
+  --orange-500: #f2843a;  /* same as --accent */
+  --orange-400: #f69d60;
+  --orange-300: #fabb8c;  /* same as --sun */
+  --orange-200: #fdd9be;
+  --orange-100: #fef0e3;  /* same as --accent-soft */
+
+  --sand-50:  #fbf9f3;
+  --sand-100: #f5f1e8;  /* same as --background */
+  --sand-200: #ece6d8;
+  --sand-300: #ddd5c3;
+  --sand-400: #c4baa3;
+
+  --ink-900: #0c2723;   /* same as --foreground */
+  --ink-800: #163631;
+  --ink-700: #2c4842;
+  --ink-500: #56706b;
+  --ink-400: #80938d;
+  --ink-300: #a9b6b1;
+
+  /* Legacy aliases kept so existing streak/celebration code doesn't
+     have to change while the migration continues. */
+  --teal-stage: var(--teal-950);
+  --teal-deep: #05221f;
+  --ink: var(--ink-900);
+  --cream: var(--sand-100);
+  --orange-bright: #ffb03a;
+  --orange-deep: #e2612b;
+  --orange-light: #ffb27a;
+  --mint-deep: var(--teal-700);
+  --mint-medium: var(--mint-400);
+  --mint-light: #7fe3c9;
+  /* Gold: the handoff's one new hue. Already hardcoded in the first-meal and
+     challenge confetti before this; those literals should move onto it. The
+     full --gold-100…700 ramp belongs in the design system's token file --
+     these are the two stops the milestone screens actually use. */
+  --gold-500: #ffd24a;
+  --gold-300: #ffd98a;
+  /* Reserved for the 14-day tier, not a general accent. */
+  --milestone: var(--gold-500);
+
+  /* ── Shape scale ─────────────────────────────────────────────────
+     Semantic radii, not raw sizes. Each name matches an actual surface
+     type in the design so a screen picks by role (a tile is a tile),
+     not by a pixel count. Tailwind default rounded-* keeps its own
+     scale so existing utility usage doesn't shift. */
+  --radius-chip: 14px;       /* pills, small chips, input rows */
+  --radius-tile: 18px;       /* nutrient tiles, stat tiles */
+  --radius-card: 24px;       /* the standard card surface */
+  --radius-hero: 30px;       /* hero panels: Today, Coach header */
+  --radius-panel: 36px;      /* full-bleed sheets */
+  --radius-pill: 999px;
+
+  /* ── Elevation scale ─────────────────────────────────────────────
+     Deep-teal-tinted shadows, matched to the reskin's palette so
+     surfaces feel like they belong to the same room. */
+  --shadow-tile: 0 2px 6px rgba(12, 39, 35, 0.06);
+  --shadow-card: 0 6px 18px rgba(20, 20, 32, 0.05);
+  --shadow-hero: 0 14px 36px rgba(12, 39, 35, 0.14);
+  --shadow-accent: 0 10px 24px rgba(242, 132, 58, 0.32);
+  --shadow-brand:  0 10px 24px rgba(55, 201, 166, 0.30);
+
+  /* ── Screen padding / control heights ────────────────────────────
+     Shared with onboarding so a screen laid out here looks the same
+     way one built for onboarding does. */
+  --screen-pad-x: 24px;
+  --screen-pad-top: 20px;
+  /* Clear whatever the OS reserves at the bottom (Android nav bar, iOS home
+     indicator). The floor is generous enough to sit above a 3-button nav bar
+     even on the pre-edge-to-edge shell where safe-area-inset-bottom is 0. */
+  --screen-pad-bottom: max(44px, calc(env(safe-area-inset-bottom) + 16px));
+  /* Space for the status bar above the first row. In a browser that's the
+     top safe-area inset; the native shell already keeps the WebView below
+     the status bar (Flutter SafeArea), but Android's WebView still reports
+     the inset, so adding it again doubled the gap. See html.native-shell. */
+  --safe-top: env(safe-area-inset-top);
+  --content-max: 440px;
+  --control-h: 56px;
+  --control-h-sm: 44px;
+  --field-h: 56px;
+}
+
+/* Set before first paint by the inline script in app/layout.tsx when the
+   page runs inside the Fitmonk app (its WebView user agent carries
+   "FitmonkShell"). */
+html.native-shell {
+  --safe-top: 0px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-sun: var(--sun);
+  --color-forest: var(--forest);
+  --color-brand: var(--brand);
+  --color-teal-stage: var(--teal-stage);
+  --color-mint-deep: var(--mint-deep);
+  --color-mint-medium: var(--mint-medium);
+  --color-mint-light: var(--mint-light);
+  --color-orange-bright: var(--orange-bright);
+  --color-orange-deep: var(--orange-deep);
+  --color-orange-light: var(--orange-light);
+  --color-gold-500: var(--gold-500);
+  --color-gold-300: var(--gold-300);
+
+  /* Full ramps exposed. e.g. bg-teal-700, text-ink-500, border-sand-200. */
+  --color-teal-950: var(--teal-950);
+  --color-teal-900: var(--teal-900);
+  --color-teal-800: var(--teal-800);
+  --color-teal-700: var(--teal-700);
+  --color-teal-600: var(--teal-600);
+  --color-teal-500: var(--teal-500);
+  --color-mint-700: var(--mint-700);
+  --color-mint-600: var(--mint-600);
+  --color-mint-500: var(--mint-500);
+  --color-mint-400: var(--mint-400);
+  --color-mint-300: var(--mint-300);
+  --color-mint-200: var(--mint-200);
+  --color-mint-100: var(--mint-100);
+  --color-orange-700: var(--orange-700);
+  --color-orange-600: var(--orange-600);
+  --color-orange-500: var(--orange-500);
+  --color-orange-400: var(--orange-400);
+  --color-orange-300: var(--orange-300);
+  --color-orange-200: var(--orange-200);
+  --color-orange-100: var(--orange-100);
+  --color-sand-50:  var(--sand-50);
+  --color-sand-100: var(--sand-100);
+  --color-sand-200: var(--sand-200);
+  --color-sand-300: var(--sand-300);
+  --color-sand-400: var(--sand-400);
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-ink-500: var(--ink-500);
+  --color-ink-400: var(--ink-400);
+  --color-ink-300: var(--ink-300);
+
+  /* Typography scale: text-display-xl / text-title-m / text-body-s /
+     text-overline / text-label / text-caption. */
+  --text-display-xl: 56px;
+  --text-display-xl--line-height: 1.02;
+  --text-display-xl--letter-spacing: -0.02em;
+  --text-display-l: 40px;
+  --text-display-l--line-height: 1.05;
+  --text-display-l--letter-spacing: -0.02em;
+  --text-display-m: 32px;
+  --text-display-m--line-height: 1.08;
+  --text-display-m--letter-spacing: -0.02em;
+  --text-title-l: 26px;
+  --text-title-l--line-height: 1.15;
+  --text-title-l--letter-spacing: -0.01em;
+  --text-title-m: 21px;
+  --text-title-m--line-height: 1.2;
+  --text-title-m--letter-spacing: -0.01em;
+  --text-title-s: 18px;
+  --text-title-s--line-height: 1.25;
+  --text-title-s--letter-spacing: -0.01em;
+  --text-body-l: 17px;
+  --text-body-l--line-height: 1.45;
+  --text-body-m: 15px;
+  --text-body-m--line-height: 1.45;
+  --text-body-s: 13px;
+  --text-body-s--line-height: 1.4;
+  --text-label: 13px;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.01em;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.35;
+  --text-overline: 11px;
+  --text-overline--line-height: 1.2;
+  --text-overline--letter-spacing: 0.12em;
+
+  /* Shape scale exposed to Tailwind: rounded-chip / rounded-tile /
+     rounded-card / rounded-hero / rounded-panel / rounded-pill. */
+  --radius-chip: var(--radius-chip);
+  --radius-tile: var(--radius-tile);
+  --radius-card: var(--radius-card);
+  --radius-hero: var(--radius-hero);
+  --radius-panel: var(--radius-panel);
+  --radius-pill: var(--radius-pill);
+
+  /* Elevation scale exposed to Tailwind: shadow-tile / shadow-card /
+     shadow-hero / shadow-accent / shadow-brand. */
+  --shadow-tile: var(--shadow-tile);
+  --shadow-card: var(--shadow-card);
+  --shadow-hero: var(--shadow-hero);
+  --shadow-accent: var(--shadow-accent);
+  --shadow-brand: var(--shadow-brand);
+
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-space-grotesk);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  /* Sand ground with two viewport-pinned brand orbs — a mint bloom at
+     the top-right and a warm-orange one at the bottom-left. Tuned to be
+     visible in the strips between cards on a real mobile viewport,
+     without competing with the content. */
+  background:
+    radial-gradient(ellipse 70% 55% at 92% 3%, rgba(55, 201, 166, 0.32) 0%, transparent 58%),
+    radial-gradient(ellipse 65% 50% at 4% 96%, rgba(242, 132, 58, 0.26) 0%, transparent 60%),
+    linear-gradient(180deg, #f3ebd1 0%, #e7dbba 100%);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-manrope), sans-serif;
+}
+
+.app-ground {
+  background:
+    radial-gradient(ellipse 70% 55% at 92% 3%, rgba(55, 201, 166, 0.32) 0%, transparent 58%),
+    radial-gradient(ellipse 65% 50% at 4% 96%, rgba(242, 132, 58, 0.26) 0%, transparent 60%),
+    linear-gradient(180deg, #f3ebd1 0%, #e7dbba 100%);
+  background-attachment: fixed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@layer base {
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
+
+::selection {
+  background: rgba(15, 108, 92, 0.18);
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-space-grotesk), sans-serif;
+    letter-spacing: -0.04em;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: var(--surface);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  .panel-outline {
+    border: 1px solid var(--border);
+    background: rgba(255, 250, 242, 0.92);
+  }
+
+  .page-shell {
+    margin: 0 auto;
+    width: min(1100px, calc(100% - 1.5rem));
+  }
+
+  .grid-dots {
+    background-image:
+      radial-gradient(rgba(15, 108, 92, 0.16) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-backdrop-fade {
+    animation: backdrop-fade 220ms ease-out both;
+  }
+
+  .animate-sheet-up {
+    animation: sheet-slide-up 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    transform-origin: bottom center;
+  }
+
+  /* 4s in, 2s hold, 4s out -- a pace slow enough to actually settle breathing
+     during a rest period rather than just decorating the screen. */
+  .animate-rest-breathe {
+    animation: rest-breathe 10s ease-in-out infinite;
+  }
+}
+
+@keyframes backdrop-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rest-breathe {
+  0%,
+  100% {
+    transform: scale(0.82);
+    opacity: 0.62;
+  }
+
+  40%,
+  60% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(36px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ──────────────────────────────────────────────
+ *  Water Tracker – Animated Jar
+ * ────────────────────────────────────────────── */
+
+.water-tracker {
+  margin-top: 0.75rem;
+  border-radius: 22px;
+  border: 1px solid rgba(12, 39, 35, 0.08);
+  /* Flat white card for the Korean-reskin hero-droplet layout. */
+  background: #ffffff;
+  padding: 1.1rem 1.1rem 1.2rem;
+  box-shadow: 0 10px 24px rgba(20, 20, 32, 0.05);
+}
+
+/* Hero arrangement: the droplet is the centrepiece, the count sits under it. */
+.water-tracker__content {
+  flex-direction: column-reverse !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+}
+.water-tracker__stats {
+  flex: none !important;
+  text-align: center;
+}
+.water-tracker__amount {
+  justify-content: center;
+}
+.water-tracker__amount-value {
+  color: #0c2723 !important;
+}
+
+.water-tracker--compact {
+  padding: 0.85rem 0.95rem 0.8rem;
+}
+
+/* ── Liquid glass ─────────────────────────────────────────────────────────
+   Frosted surfaces over <GlassBackdrop>. Screens opt in with `.glass-ui`;
+   onboarding and paywall keep their own look. On devices that can't afford
+   backdrop blur (reduced transparency, or data-glass="solid" set by
+   GlassBackdrop on low-end hardware) every surface turns near-solid. */
+:root {
+  --glass-light: rgba(255, 255, 255, 0.55);
+  --glass-light-border: rgba(255, 255, 255, 0.6);
+  --glass-dark: rgba(14, 75, 69, 0.7);
+  --glass-tint: rgba(206, 118, 50, 0.55);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 10px 24px rgba(60, 40, 20, 0.08), var(--glass-highlight);
+  --glass-shadow-dark: 0 16px 34px rgba(12, 39, 35, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-light: rgba(255, 255, 255, 0.88);
+    --glass-dark: rgba(14, 75, 69, 0.95);
+    --glass-tint: rgba(206, 118, 50, 0.92);
+  }
+}
+:root[data-glass="solid"] {
+  --glass-light: rgba(255, 255, 255, 0.88);
+  --glass-dark: rgba(14, 75, 69, 0.95);
+  --glass-tint: rgba(206, 118, 50, 0.92);
+}
+
+/* Kept out of the @utility blocks: Tailwind drops a var()-valued
+   backdrop-filter there, so the blur is literal and switched off here. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .glass-dark, .glass-tint, .glass-ui .water-tracker {
+    backdrop-filter: none !important;
+  }
+}
+:root[data-glass="solid"] :is(.glass, .glass-dark, .glass-tint, .glass-ui .water-tracker) {
+  backdrop-filter: none !important;
+}
+
+/* Standalone frosted surface: cards, pills, lists. 20px matches iOS native
+   material; 40px looked identical on screen but doubled the GPU cost that
+   showed up as scroll stutter on Android WebView. */
+@utility glass {
+  border: 1px solid var(--glass-light-border);
+  background-color: var(--glass-light);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(20px) saturate(1.4);
+}
+/* Dark green hero glass; text on it is white. */
+@utility glass-dark {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: var(--glass-dark);
+  box-shadow: var(--glass-shadow-dark);
+  color: #ffffff;
+  backdrop-filter: blur(20px) saturate(1.4);
+}
+/* Amber accent glass: at most one per screen. */
+@utility glass-tint {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: var(--glass-tint);
+  box-shadow: var(--glass-shadow-dark);
+  color: #ffffff;
+  backdrop-filter: blur(20px) saturate(1.4);
+}
+/* Popovers and menus over glass. Solid, with no blur of its own: they open
+   over busy content, where even slight transparency ghosts the dark cards
+   underneath through the text. */
+@utility glass-sheet {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background-color: #faf8f3;
+  box-shadow: 0 24px 48px rgba(17, 23, 15, 0.18), 0 2px 8px rgba(17, 23, 15, 0.06), var(--glass-highlight);
+}
+
+/* Dark glass nested inside another glass surface (toggle thumb, active tab):
+   same tint, no blur, since nested backdrop blur renders see-through. */
+@utility glass-dark-inset {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background-color: var(--glass-dark);
+  box-shadow: 0 8px 18px rgba(12, 39, 35, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Surface nested inside a glass card (chips, input rows): no second blur. */
+@utility glass-inset {
+  border: 1px solid var(--glass-light-border);
+  background-color: rgba(255, 255, 255, 0.55);
+  box-shadow: var(--glass-highlight);
+}
+
+/* Type: Urbanist throughout, and the app's semibold steps down to medium so
+   labels sit light against the frosted surfaces. */
+.glass-ui,
+.glass-ui h1,
+.glass-ui h2,
+.glass-ui h3,
+.glass-ui textarea,
+.glass-ui button {
+  font-family: var(--font-glass), var(--font-manrope), sans-serif;
+  letter-spacing: -0.01em;
+}
+.glass-ui .font-semibold,
+.glass-ui .font-bold {
+  font-weight: 500;
+}
+
+/* Coach mark: waveform bars breathe while voice input is listening. */
+.coach-wave-bar {
+  animation: coach-wave 0.9s ease-in-out infinite;
+}
+@keyframes coach-wave {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-wave-bar { animation: none; }
+}
+
+/* Water tracker on glass: jar on the left, the count beside it, and add
+   stacked over remove on the right. The controls wrapper steps aside
+   (display: contents) so the jar and both buttons join the grid. */
+.glass-ui .water-tracker {
+  border-radius: var(--radius-hero);
+  border: 1px solid var(--glass-light-border);
+  background: var(--glass-light);
+  backdrop-filter: blur(40px) saturate(1.4);
+  box-shadow: var(--glass-shadow);
+}
+.glass-ui .water-tracker__content {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "jar stats add"
+    "jar stats remove";
+  align-items: center;
+  column-gap: 0.9rem;
+  row-gap: 0.5rem;
+}
+.glass-ui .water-tracker__controls {
+  display: contents;
+}
+.glass-ui .water-tracker__droplet {
+  grid-area: jar;
+}
+.glass-ui .water-tracker__btn--add {
+  grid-area: add;
+}
+.glass-ui .water-tracker__btn--remove {
+  grid-area: remove;
+}
+.glass-ui .water-tracker--compact .water-tracker__btn {
+  height: 38px;
+  width: 38px;
+}
+.glass-ui .water-tracker__stats {
+  grid-area: stats;
+  text-align: left;
+}
+.glass-ui .water-tracker__amount {
+  justify-content: flex-start;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+.glass-ui .water-tracker--compact .water-tracker__amount-value {
+  font-size: 34px;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+}
+.glass-ui .water-tracker--compact .water-tracker__amount-unit,
+.glass-ui .water-tracker--compact .water-tracker__target {
+  font-size: 12px;
+  font-weight: 400;
+}
+.glass-ui .water-tracker--compact .water-tracker__droplet {
+  width: 54px;
+  height: 76px;
+}
+/* Outline the jar so it still reads at 0 ml on frosted glass; the white
+   sheen washes it out there, so it goes. */
+.glass-ui .water-tracker__droplet-outline > path:first-of-type {
+  fill: rgba(61, 155, 239, 0.12);
+  stroke: rgba(44, 127, 196, 0.55);
+  stroke-width: 3.5;
+}
+.glass-ui .water-tracker__sheen {
+  display: none;
+}
+.glass-ui .water-tracker__btn--remove {
+  background: var(--glass-light);
+  color: #1d2420;
+  border: 1px solid rgba(30, 40, 35, 0.2);
+}
+
+/* Layout */
+.water-tracker__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.water-tracker__stats {
+  min-width: 0;
+  flex: 1;
+}
+
+.water-tracker__amount {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.water-tracker__amount-value {
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  color: #11170f;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.water-tracker__amount-unit {
+  padding-bottom: 2px;
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(17, 23, 15, 0.58);
+}
+
+.water-tracker__target {
+  /* Sits inline after the amount now, so no top gap. */
+  margin-top: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(12, 39, 35, 0.42);
+}
+
+.water-tracker__percent {
+  margin-top: 0.25rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(17, 23, 15, 0.46);
+}
+
+/* Right-side controls */
+.water-tracker__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+}
+
+.water-tracker--compact .water-tracker__content {
+  gap: 0.6rem;
+}
+
+.water-tracker--compact .water-tracker__amount-value {
+  font-size: 34px;
+}
+
+.water-tracker--compact .water-tracker__amount-unit {
+  font-size: 16px;
+}
+
+.water-tracker--compact .water-tracker__target {
+  margin-top: 0.25rem;
+  font-size: 14px;
+}
+
+.water-tracker--compact .water-tracker__percent {
+  margin-top: 0.12rem;
+  font-size: 12px;
+}
+
+.water-tracker--compact .water-tracker__controls {
+  gap: 0.55rem;
+}
+
+/* Buttons */
+.water-tracker__btn {
+  display: flex;
+  height: 54px;
+  width: 54px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s ease;
+}
+
+.water-tracker--compact .water-tracker__btn {
+  height: 42px;
+  width: 42px;
+}
+
+.water-tracker__btn:active {
+  transform: scale(0.92);
+}
+
+.water-tracker__btn--remove {
+  background: #eaf4fe;
+  color: #1f80ea;
+  border: 1px solid rgba(31, 128, 234, 0.18);
+}
+
+.water-tracker__btn--add {
+  background: #1f80ea;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(31, 128, 234, 0.3);
+}
+
+.water-tracker__btn--bounce {
+  animation: btn-bounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Droplet ── */
+.water-tracker__droplet {
+  position: relative;
+  width: 112px;
+  height: 126px;
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.water-tracker--compact .water-tracker__droplet {
+  width: 78px;
+  height: 88px;
+}
+
+.water-tracker__droplet--ripple {
+  animation: jar-ripple 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.water-tracker__droplet-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.water-tracker__clip-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.water-tracker__water-body {
+  fill: url(#waterGrad);
+  transition: transform 1.2s cubic-bezier(0.34, 1, 0.64, 1);
+}
+
+.water-tracker__clip-svg rect {
+  fill: rgba(45, 153, 245, 0.68);
+  transition: transform 1.2s cubic-bezier(0.34, 1, 0.64, 1);
+}
+
+/* Wave animations */
+.water-tracker__wave {
+  transition: transform 1.2s cubic-bezier(0.34, 1, 0.64, 1);
+}
+
+.water-tracker__wave--1 path {
+  animation: wave-drift-1 3.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.water-tracker__wave--2 path {
+  animation: wave-drift-2 2.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.water-tracker__wave--3 path {
+  animation: wave-drift-3 4.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Sheen – glass highlight overlay */
+.water-tracker__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 50% 50% 46% 46% / 36% 36% 58% 58%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.12) 24%,
+    transparent 42%,
+    transparent 100%
+  );
+}
+
+/* Bubbles */
+.water-tracker__bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.water-tracker__bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  animation: bubble-rise 0.9s ease-out forwards;
+}
+
+.water-tracker__bubble--1 {
+  width: 6px; height: 6px;
+  left: 38%; bottom: 10%;
+  animation-delay: 0ms;
+}
+.water-tracker__bubble--2 {
+  width: 4px; height: 4px;
+  left: 52%; bottom: 15%;
+  animation-delay: 80ms;
+}
+.water-tracker__bubble--3 {
+  width: 8px; height: 8px;
+  left: 45%; bottom: 8%;
+  animation-delay: 150ms;
+}
+.water-tracker__bubble--4 {
+  width: 3px; height: 3px;
+  left: 60%; bottom: 18%;
+  animation-delay: 200ms;
+}
+.water-tracker__bubble--5 {
+  width: 5px; height: 5px;
+  left: 35%; bottom: 22%;
+  animation-delay: 100ms;
+}
+
+/* Quick-add chips */
+.water-tracker__chips {
+  display: flex;
+  justify-content: center;
+  gap: 0.625rem;
+  margin-top: 1rem;
+}
+
+.water-tracker--compact .water-tracker__chips {
+  margin-top: 0.75rem;
+}
+
+.water-tracker__chip {
+  border-radius: 999px;
+  border: 1px solid rgba(34, 126, 228, 0.18);
+  background: rgba(34, 126, 228, 0.08);
+  padding: 0.375rem 0.875rem;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2288ee;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.water-tracker__chip:hover {
+  background: rgba(34, 126, 228, 0.14);
+  border-color: rgba(34, 126, 228, 0.3);
+}
+
+.water-tracker__chip:active {
+  transform: scale(0.95);
+  background: rgba(34, 126, 228, 0.2);
+}
+
+/* ── Keyframes ── */
+
+@keyframes wave-drift-1 {
+  0%, 100% { transform: translateX(0px); }
+  50% { transform: translateX(-50px); }
+}
+
+@keyframes wave-drift-2 {
+  0%, 100% { transform: translateX(-20px); }
+  50% { transform: translateX(30px); }
+}
+
+@keyframes wave-drift-3 {
+  0%, 100% { transform: translateX(10px); }
+  50% { transform: translateX(-40px); }
+}
+
+@keyframes bubble-rise {
+  0% {
+    opacity: 0.8;
+    transform: translateY(0) scale(0.5);
+  }
+  60% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1.2);
+  }
+}
+
+@keyframes btn-bounce {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.18); }
+  65% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
+@keyframes jar-ripple {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.03); }
+  60% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* Challenge intro — the hype screen shown until a challenge is joined.
+   Per-element durations and delays are set inline, since every layer runs on
+   its own timing. */
+@keyframes ci-ring {
+  0% { transform: scale(0.2); opacity: 0.55; }
+  70% { opacity: 0.12; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+@keyframes ci-spark {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  25% { opacity: 0.9; }
+  100% { transform: translateY(-190px) scale(1); opacity: 0; }
+}
+
+@keyframes ci-pop {
+  0% { transform: scale(0.72); opacity: 0; }
+  60% { transform: scale(1.06); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes ci-rise {
+  0% { transform: translateY(28px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes ci-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+
+@keyframes ci-shine {
+  0% { transform: translateX(-120%); }
+  55% { transform: translateX(220%); }
+  100% { transform: translateX(220%); }
+}
+
+@keyframes ci-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ci-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Reduced motion: hold the final composed frame — no bursts, no sparks, no
+   shine, no breathe — but still fade in and still auto-advance. */
+@media (prefers-reduced-motion: reduce) {
+  .ci-motion {
+    animation: none !important;
+  }
+
+  .ci-decor {
+    display: none !important;
+  }
+}
+
+/* Coach intro — variant E of the first-run Coach tab screen. Transform-only
+   entrances (per the design system's capture rule), a 7-second loop that
+   fades the user question in, types the reply line by line, and lights each
+   scan row in sequence. */
+@keyframes coach-intro-rise {
+  0% { transform: translateY(16px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes coach-intro-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -14px, 0); }
+}
+
+@keyframes coach-intro-fadeq {
+  0%, 8% { opacity: 0; transform: translateY(8px); }
+  16% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes coach-intro-type1 {
+  0%, 20% { width: 0; }
+  31% { width: 100%; }
+  100% { width: 100%; }
+}
+
+@keyframes coach-intro-type2 {
+  0%, 31% { width: 0; }
+  42% { width: 100%; }
+  100% { width: 100%; }
+}
+
+@keyframes coach-intro-type3 {
+  0%, 42% { width: 0; }
+  53% { width: 100%; }
+  100% { width: 100%; }
+}
+
+@keyframes coach-intro-hl {
+  0%, 4% {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(231, 224, 209, 0.9);
+    transform: translateX(0);
+  }
+  9% {
+    background: rgba(92, 215, 185, 0.26);
+    border-color: rgba(55, 201, 166, 0.55);
+    transform: translateX(5px);
+  }
+  20%, 100% {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(231, 224, 209, 0.9);
+    transform: translateX(0);
+  }
+}
+
+@keyframes coach-intro-tick {
+  0%, 5% { opacity: 0; transform: scale(0.4); }
+  12% { opacity: 1; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-intro-motion {
+    animation: none !important;
+  }
+  .coach-intro-decor {
+    display: none !important;
+  }
+  /* Freeze the typed lines at their full width so the reply reads as finished. */
+  .coach-intro-type {
+    width: 100% !important;
+  }
+}
+
+/* Adaptive session activated — 3-second takeover shown when the user commits
+   to today's adaptive session (Update today's plan in the readiness sheet).
+   Transform-only entrances so PPTX/PNG captures never sample a blank frame;
+   opacity is used only on the rings and on the dismiss crossfade. */
+@keyframes adaptive-rise {
+  0% { transform: translateY(16px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes adaptive-ring {
+  0% { transform: scale(0.3); opacity: 0.55; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+@keyframes adaptive-sheen {
+  0% { transform: translateX(-150%) skewX(-12deg); }
+  100% { transform: translateX(320%) skewX(-12deg); }
+}
+
+@keyframes adaptive-fill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adaptive-motion {
+    animation: none !important;
+    transform: none !important;
+  }
+  .adaptive-decor {
+    display: none !important;
+  }
+  /* Hold the hairline at 100% so the screen still reads as an active
+     "session opening" frame while it counts down to the auto-dismiss. */
+  .adaptive-progress {
+    animation: none !important;
+    width: 100% !important;
+  }
+}
+
+/* Day fully logged — celebration takeover shown once per day when the last
+   planned meal is logged. Same motion language as the adaptive-* screen:
+   transform-only entrances, opacity used only on the hero rings. */
+@keyframes day-fully-hero {
+  0% { transform: scale(0.2); }
+  60% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+@keyframes day-fully-ring {
+  0% { transform: scale(0.5); opacity: 0.5; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes day-fully-ignite {
+  0% { transform: scale(0.5) rotate(-12deg); }
+  52% { transform: scale(1.18) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes day-fully-stamp-in {
+  0% { transform: scale(0.2) rotate(-16deg); }
+  60% { transform: scale(1.25) rotate(6deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day-fully-stamp {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* First meal logged — the one-time win shown when an account's first meal log
+   saves. Same motion language as the challenge intro, but every element runs on
+   its own timing, so durations and delays are set inline. */
+@keyframes fm-ring {
+  0% { transform: scale(0.25); opacity: 0.6; }
+  70% { opacity: 0.12; }
+  100% { transform: scale(2.7); opacity: 0; }
+}
+
+@keyframes fm-conf {
+  0% { transform: translateY(0) rotate(0); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(760px) rotate(560deg); opacity: 0; }
+}
+
+@keyframes fm-stamp {
+  0% { transform: scale(0.35) rotate(-18deg); opacity: 0; }
+  55% { transform: scale(1.14) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes fm-pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  62% { transform: scale(1.07); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fm-rise {
+  0% { transform: translateY(26px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Paired with stroke-dasharray: 34 on the check path. */
+@keyframes fm-tick {
+  0% { stroke-dashoffset: 34; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes fm-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes fm-shine {
+  0% { transform: translateX(-130%); }
+  55% { transform: translateX(240%); }
+  100% { transform: translateX(240%); }
+}
+
+@keyframes fm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fm-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Reduced motion: render the settled final frame — no burst, no confetti, no
+   breathe, no sweep, no check draw. The overlay still fades in. */
+@media (prefers-reduced-motion: reduce) {
+  .fm-motion {
+    animation: none !important;
+  }
+
+  .fm-decor {
+    display: none !important;
+  }
+}
+
+/* Streak milestone takeovers (day 3/7/14/30). The handoff's `ring`, `pop`,
+   `rise` and `shine` are already above as fm-*, so only the four it adds are
+   defined here. Durations and delays are per-tier and set inline. */
+@keyframes sm-ignite {
+  0% { transform: scale(0.5) rotate(-14deg); opacity: 0; }
+  50% { transform: scale(1.22) rotate(6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes sm-flicker {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  45% { transform: scale(1.06); opacity: 0.93; }
+}
+
+/* Travel distance varies per spark; the element sets --sm-spark-rise. */
+@keyframes sm-spark {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  22% { opacity: 0.95; }
+  100% { transform: translateY(var(--sm-spark-rise, -220px)) scale(1); opacity: 0; }
+}
+
+@keyframes sm-orbit {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Same contract as .fm-motion/.fm-decor: settled frame, no loops, no decor. */
+@media (prefers-reduced-motion: reduce) {
+  .sm-motion {
+    animation: none !important;
+  }
+
+  .sm-decor {
+    display: none !important;
+  }
+}
+
+/* Comeback takeover (return after a long absence). The deliberate inverse of
+   the streak burst: rings breathe slowly instead of bursting, the medallion
+   settles down into place rather than popping up, and the return arc draws
+   itself. Reuses fm-rise / fm-fade-in for the plain entrances. */
+@keyframes cb-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes cb-settle {
+  0% { transform: scale(1.12); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes cb-sweep {
+  0% { transform: translateX(-130%); }
+  60% { transform: translateX(240%); }
+  100% { transform: translateX(240%); }
+}
+
+/* Paired with stroke-dasharray: 64 on the arc path. */
+@keyframes cb-trace {
+  0% { stroke-dashoffset: 64; opacity: 0; }
+  25% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+/* Reduced motion: the arc renders complete (dashoffset defaults to 0 once the
+   trace animation is gone), and the decorative rings and sweep drop out. */
+@media (prefers-reduced-motion: reduce) {
+  .cb-motion {
+    animation: none !important;
+  }
+
+  .cb-decor {
+    display: none !important;
+  }
+}

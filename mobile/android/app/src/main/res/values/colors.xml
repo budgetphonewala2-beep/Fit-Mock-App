@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#0c2723</color>
+    <!-- Matches the web app's background token and the Flutter Scaffold's
+         backgroundColor. Used as the Activity window background so the brief
+         frame Android paints between SystemNavigator.pop() and the Activity
+         actually finishing shows sand, not black (dark mode) or white (light
+         mode). -->
+    <color name="shell_background">#F5F1E8</color>
+</resources>

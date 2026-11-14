@@ -1,0 +1,98 @@
+"use client";
+
+import { getApp, getApps, initializeApp } from "firebase/app";
+import {
+  Auth,
+  GoogleAuthProvider,
+  User,
+  UserCredential,
+  getAuth,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  signInWithCredential,
+} from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { hasFirebaseEnv } from "@/lib/env";
+import { nativeBridge } from "@/lib/native-bridge";
+
+function createFirebaseApp() {
+  if (!hasFirebaseEnv()) {
+    return null;
+  }
+
+  return getApps().length > 0
+    ? getApp()
+    : initializeApp({
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      });
+}
+
+export function createFirebaseAuth() {
+  const app = createFirebaseApp();
+
+  if (!app) {
+    return null;
+  }
+
+  return getAuth(app);
+}
+
+export function createFirebaseDb() {
+  const app = createFirebaseApp();
+
+  if (!app) {
+    return null;
+  }
+
+  return getFirestore(app);
+}
+
+export function createGoogleAuthProvider() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  return provider;
+}
+
+/**
+ * Native Google sign-in path for the Flutter WebView shell. Google refuses
+ * OAuth inside WebViews, so the shell runs the native picker and hands us an
+ * id token; we exchange it for a Firebase credential the same way the web
+ * popup flow does. Callers should gate on `nativeBridge.isNative` before use.
+ */
+export async function signInWithGoogleNative(auth: Auth): Promise<UserCredential> {
+  const result = await nativeBridge.auth.googleSignIn();
+  if (!result?.idToken) {
+    throw new Error("Native Google sign-in did not return an id token.");
+  }
+  const credential = GoogleAuthProvider.credential(
+    result.idToken,
+    result.accessToken ?? undefined,
+  );
+  return signInWithCredential(auth, credential);
+}
+
+/**
+ * Confirms the signed-in user again, which Firebase requires shortly before
+ * sensitive actions like deleting the account. Uses the native picker inside
+ * the app shell and the Google popup on the web.
+ */
+export async function reauthenticateWithGoogle(user: User): Promise<void> {
+  if (nativeBridge.isNative) {
+    const result = await nativeBridge.auth.googleSignIn();
+    if (!result?.idToken) {
+      throw new Error("Native Google sign-in did not return an id token.");
+    }
+    await reauthenticateWithCredential(
+      user,
+      GoogleAuthProvider.credential(result.idToken, result.accessToken ?? undefined),
+    );
+    return;
+  }
+  await reauthenticateWithPopup(user, createGoogleAuthProvider());
+}

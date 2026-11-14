@@ -1,0 +1,583 @@
+/* ============================================================
+   Fitmonk onboarding + paywall design system.
+   Scoped under .fm-theme so none of these tokens or resets leak
+   into the rest of the app (which keeps its existing look).
+   ============================================================ */
+
+/* Color ramps (--teal-*, --mint-*, --orange-*, --sand-*, --ink-*),
+   the typography scale (--text-*, exposed to Tailwind), the shape
+   scale (--radius-chip/tile/card/hero/panel/pill), the shadow scale
+   (--shadow-tile/card/hero/accent/brand) and screen padding vars
+   all live in globals.css :root now. This block owns only the
+   onboarding-lane-specific semantics and legacy aliases the fm-*
+   CSS classes below still read through. */
+.fm-theme {
+  --white: #FFFFFF;
+
+  --success: var(--mint-600);
+  --success-bg: var(--mint-100);
+  --warning: var(--orange-600);
+  --warning-bg: var(--orange-100);
+  --danger: #D8453B;
+  --danger-bg: #FCE7E4;
+  --info: #2B7DC4;
+  --info-bg: #E5F0FA;
+
+  --brand-strong: var(--teal-900);
+  --brand-on: var(--ink-900);
+  --accent-on: var(--white);
+
+  --bg-page: var(--sand-50);
+  --bg-subtle: var(--sand-100);
+  --bg-surface: var(--white);
+  --bg-inverse: var(--teal-900);
+  --bg-inverse-2: var(--teal-950);
+
+  --text-primary: var(--ink-900);
+  --text-secondary: #4B635E;
+  --text-tertiary: #7E908B;
+  --text-on-dark: var(--sand-100);
+  --text-on-dark-dim: rgba(245, 241, 232, 0.66);
+  --text-on-brand: var(--ink-900);
+
+  /* Onboarding surfaces sit on a sand ground, so borders are the same
+     warm sand family; :root's --border is a translucent teal for
+     white-surface in-app screens. */
+  --border: #E7E0D1;
+  --border-strong: #D5CCB8;
+  --border-on-dark: rgba(245, 241, 232, 0.16);
+
+  --focus-ring: var(--mint-500);
+  --overlay-scrim: rgba(7, 48, 44, 0.55);
+
+  --font-display: var(--font-space-grotesk), "Archivo", system-ui, sans-serif;
+  --font-body: var(--font-manrope), "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extra: 800;
+  --fw-black: 900;
+
+  /* Legacy typography aliases so the fm-* CSS rules below don't have
+     to change while the migration continues. Sizes come from :root. */
+  --fs-display-xl: var(--text-display-xl); --lh-display-xl: 1.02;
+  --fs-display-l:  var(--text-display-l);  --lh-display-l: 1.05;
+  --fs-display-m:  var(--text-display-m);  --lh-display-m: 1.08;
+  --fs-title-l:    var(--text-title-l);    --lh-title-l: 1.15;
+  --fs-title-m:    var(--text-title-m);    --lh-title-m: 1.2;
+  --fs-title-s:    var(--text-title-s);    --lh-title-s: 1.25;
+  --fs-body-l:     var(--text-body-l);     --lh-body-l: 1.45;
+  --fs-body-m:     var(--text-body-m);     --lh-body-m: 1.45;
+  --fs-body-s:     var(--text-body-s);     --lh-body-s: 1.4;
+  --fs-label:      var(--text-label);      --lh-label: 1.2;
+  --fs-caption:    var(--text-caption);    --lh-caption: 1.35;
+  --fs-overline:   var(--text-overline);   --lh-overline: 1.2;
+
+  --ls-display: -0.02em;
+  --ls-title: -0.01em;
+  --ls-body: 0em;
+  --ls-overline: 0.12em;
+  --ls-label: 0.01em;
+
+  /* Legacy radius aliases: onboarding-specific values that don't fit
+     the semantic scale (chip=14, tile=18, card=24, hero=30). Preserved
+     so existing fm-* rules keep their exact shapes. */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+
+  /* Legacy shadow aliases. --shadow-md is intentionally stronger than
+     the app-wide --shadow-card so onboarding surfaces read as more
+     elevated -- the flow lives on a color ground, cards need to lift. */
+  --shadow-xs: 0 1px 2px rgba(12, 39, 35, 0.06);
+  --shadow-sm: 0 2px 6px rgba(12, 39, 35, 0.07);
+  --shadow-md: 0 6px 18px rgba(12, 39, 35, 0.10);
+  --shadow-lg: var(--shadow-hero);
+
+  --ring-brand: 0 0 0 3px rgba(55, 201, 166, 0.35);
+  --ring-accent: 0 0 0 3px rgba(242, 132, 58, 0.32);
+
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  min-height: 100vh;
+  background: var(--bg-page);
+  font-family: var(--font-body), system-ui, sans-serif;
+  color: var(--text-primary);
+}
+
+.fm-theme *,
+.fm-theme *::before,
+.fm-theme *::after {
+  box-sizing: border-box;
+}
+.fm-theme *::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.fm-theme * { scrollbar-width: none; }
+
+/* Screen chrome (min-height, background, text color, font family) is now
+   owned by the <Screen> primitive in src/components/ui/screen.tsx.
+   .fm-screen--dark / --light survive only as marker classes so a few
+   descendant rules below (topbar chrome, eyebrow, sub) can still target
+   the dark variant. */
+
+/* Top bar: back + segmented progress */
+.fm-topbar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px var(--screen-pad-x) 6px;
+}
+.fm-back {
+  width: 40px; height: 40px; border-radius: var(--radius-pill);
+  display: grid; place-items: center; flex: none;
+  background: transparent; border: none; cursor: pointer;
+  color: inherit; transition: background var(--dur-fast) var(--ease-out);
+}
+.fm-back:hover { background: rgba(12, 39, 35, 0.06); }
+.fm-screen--dark .fm-back:hover { background: rgba(245, 241, 232, 0.10); }
+.fm-progress { flex: 1; display: flex; gap: 5px; }
+.fm-progress span {
+  height: 6px; flex: 1; border-radius: var(--radius-pill);
+  background: var(--sand-200); overflow: hidden; position: relative;
+}
+.fm-screen--dark .fm-progress span { background: rgba(245, 241, 232, 0.18); }
+.fm-progress span::after {
+  content: ""; position: absolute; inset: 0; width: 0;
+  background: var(--brand); border-radius: inherit;
+  transition: width var(--dur-slow) var(--ease-out);
+}
+.fm-progress span.is-done::after { width: 100%; }
+.fm-progress span.is-active::after { width: 55%; }
+.fm-step-count {
+  font-size: var(--fs-caption); font-weight: var(--fw-semibold);
+  color: var(--text-tertiary); flex: none; font-variant-numeric: tabular-nums;
+}
+.fm-screen--dark .fm-step-count { color: var(--text-on-dark-dim); }
+
+/* Body / content area is owned by the <ScreenBody> primitive. */
+.fm-eyebrow {
+  font-size: var(--fs-overline); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-overline); text-transform: uppercase;
+  color: var(--brand); margin: 0 0 10px;
+}
+.fm-screen--dark .fm-eyebrow { color: var(--mint-400); }
+.fm-title {
+  font-family: var(--font-display); font-weight: var(--fw-extra);
+  font-size: var(--fs-title-l); line-height: var(--lh-title-l);
+  letter-spacing: var(--ls-title); margin: 0; text-wrap: balance;
+}
+.fm-title--big { font-size: var(--fs-display-m); line-height: var(--lh-display-m); }
+.fm-sub {
+  font-size: var(--fs-body-m); line-height: var(--lh-body-m);
+  color: var(--text-secondary); margin: 10px 0 0; max-width: 34ch;
+}
+.fm-screen--dark .fm-sub { color: var(--text-on-dark-dim); }
+
+/* Footer / sticky action zone is owned by the <ScreenFooter> primitive. */
+
+/* Buttons: moved to <Button size="lg"> in src/components/ui/button.tsx.
+   Every onboarding + sign-in + paywall CTA now renders through that one
+   primitive; the onboarding `Btn` helper in components/onboarding/ui.tsx
+   is a thin variant shim over it. */
+
+/* ---------- Option tiles (selectable) ---------- */
+.fm-tiles { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.fm-tiles--grid { display: grid; grid-template-columns: 1fr 1fr; }
+.fm-tile {
+  display: flex; align-items: center; gap: 16px; text-align: left;
+  width: 100%; padding: 18px 18px; cursor: pointer;
+  background: var(--bg-surface); border: 2px solid var(--border);
+  border-radius: var(--radius-md); color: var(--text-primary);
+  font-family: var(--font-body);
+  transition: border-color var(--dur-base) var(--ease-out),
+              background var(--dur-base) var(--ease-out),
+              transform var(--dur-fast) var(--ease-pop),
+              box-shadow var(--dur-base) var(--ease-out);
+}
+.fm-tile:hover { border-color: var(--border-strong); }
+.fm-tile:active { transform: scale(0.985); }
+.fm-tile.is-selected {
+  border-color: var(--brand); background: var(--mint-100);
+  box-shadow: var(--ring-brand);
+}
+.fm-tile__ic {
+  width: 48px; height: 48px; flex: none; border-radius: var(--radius-sm);
+  display: grid; place-items: center; background: var(--sand-100); color: var(--teal-700);
+  transition: background var(--dur-base), color var(--dur-base);
+}
+.fm-tile.is-selected .fm-tile__ic { background: var(--brand); color: var(--ink-900); }
+.fm-tile__ic svg { width: 24px; height: 24px; }
+.fm-tile__txt { flex: 1; min-width: 0; }
+.fm-tile__title { display: block; font-weight: var(--fw-bold); font-size: var(--fs-body-l); }
+.fm-tile__desc { display: block; font-size: var(--fs-body-s); color: var(--text-secondary); margin-top: 2px; line-height: 1.3; }
+.fm-tile__check {
+  width: 24px; height: 24px; flex: none; border-radius: var(--radius-pill);
+  border: 2px solid var(--border-strong); display: grid; place-items: center;
+  color: transparent; transition: all var(--dur-base) var(--ease-out);
+}
+.fm-tile.is-selected .fm-tile__check { background: var(--brand); border-color: var(--brand); color: var(--ink-900); }
+.fm-tile__check svg { width: 14px; height: 14px; }
+
+.fm-tile--stack { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+.fm-tile--stack .fm-tile__title { font-size: var(--fs-body-m); }
+
+/* ---------- Goal figure cards (image tiles) ---------- */
+.fm-goalfigs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
+.fm-goalfig {
+  position: relative; display: flex; flex-direction: column; padding: 0; cursor: pointer;
+  background: var(--bg-surface); border: 2px solid var(--border); border-radius: var(--radius-md);
+  overflow: hidden; color: var(--text-primary); font-family: var(--font-body);
+  transition: border-color var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out),
+              transform var(--dur-fast) var(--ease-pop);
+}
+.fm-goalfig:active { transform: scale(0.98); }
+.fm-goalfig.is-selected { border-color: var(--brand); box-shadow: var(--ring-brand); }
+.fm-goalfig__img {
+  position: relative; display: block; width: 100%; aspect-ratio: 3 / 4.4;
+  background: var(--sand-100); overflow: hidden;
+}
+.fm-goalfig__img img { display: block; }
+.fm-goalfig__label {
+  display: block; text-align: center; padding: 10px 6px 12px;
+  font-weight: var(--fw-bold); font-size: var(--fs-body-s); line-height: 1.2;
+  color: var(--text-secondary); transition: color var(--dur-base) var(--ease-out);
+}
+.fm-goalfig.is-selected .fm-goalfig__label { color: var(--teal-700); }
+.fm-goalfig__check {
+  position: absolute; top: 8px; right: 8px; width: 22px; height: 22px;
+  border-radius: var(--radius-pill); background: var(--brand); color: var(--ink-900);
+  display: grid; place-items: center; box-shadow: var(--shadow-sm);
+}
+.fm-goalfig__check svg { width: 13px; height: 13px; }
+
+/* ---------- Place cards (image tiles, 2-up) ---------- */
+.fm-placecards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+.fm-placecard {
+  position: relative; display: flex; flex-direction: column; padding: 0; cursor: pointer;
+  background: var(--bg-surface); border: 2px solid var(--border); border-radius: var(--radius-md);
+  overflow: hidden; color: var(--text-primary); font-family: var(--font-body); text-align: left;
+  transition: border-color var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out),
+              transform var(--dur-fast) var(--ease-pop);
+}
+.fm-placecard:active { transform: scale(0.98); }
+.fm-placecard.is-selected { border-color: var(--brand); box-shadow: var(--ring-brand); }
+.fm-placecard__img { position: relative; width: 100%; aspect-ratio: 1 / 1; background: var(--sand-100); }
+.fm-placecard__label { display: block; padding: 12px 13px 14px; }
+.fm-placecard__t {
+  display: block; font-weight: var(--fw-bold); font-size: var(--fs-body-m); line-height: 1.2;
+  transition: color var(--dur-base) var(--ease-out);
+}
+.fm-placecard.is-selected .fm-placecard__t { color: var(--teal-700); }
+.fm-placecard__d { display: block; margin-top: 4px; font-size: var(--fs-body-s); color: var(--text-secondary); line-height: 1.3; }
+/* Diet food cards use a wider (landscape) image than the square place cards. */
+.fm-placecard--diet .fm-placecard__img { aspect-ratio: 4 / 3; }
+
+/* ---------- Segmented toggle ---------- */
+.fm-seg {
+  display: inline-flex; padding: 4px; gap: 4px; width: 100%;
+  background: var(--sand-100); border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+}
+.fm-seg button {
+  flex: 1; height: 44px; border: none; cursor: pointer; border-radius: var(--radius-pill);
+  font-family: var(--font-body); font-weight: var(--fw-bold); font-size: var(--fs-body-m);
+  background: transparent; color: var(--text-secondary);
+  transition: all var(--dur-base) var(--ease-out);
+}
+.fm-seg button.is-on { background: var(--bg-surface); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+
+/* ---------- Chips ---------- */
+.fm-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.fm-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 16px; border-radius: var(--radius-pill); cursor: pointer;
+  background: var(--bg-surface); border: 1.5px solid var(--border);
+  font-family: var(--font-body); font-weight: var(--fw-semibold);
+  font-size: var(--fs-body-s); color: var(--text-primary);
+  transition: all var(--dur-base) var(--ease-out);
+}
+.fm-chip:active { transform: scale(0.96); }
+.fm-chip.is-on { background: var(--teal-900); border-color: var(--teal-900); color: var(--sand-100); }
+.fm-chip.is-on.fm-chip--accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+.fm-chip svg { width: 15px; height: 15px; }
+
+/* ---------- Big number value (steppers/pickers) ---------- */
+.fm-bignum {
+  font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-display-xl); line-height: 1; letter-spacing: -0.03em;
+  display: flex; align-items: baseline; justify-content: center; gap: 8px;
+}
+.fm-bignum small { font-family: var(--font-body); font-weight: var(--fw-bold); font-size: 22px; color: var(--text-tertiary); }
+
+.fm-stepper { display: flex; align-items: center; justify-content: center; gap: 22px; margin: 8px 0; }
+.fm-round {
+  width: 56px; height: 56px; border-radius: var(--radius-pill); flex: none; cursor: pointer;
+  border: 2px solid var(--border); background: var(--bg-surface); color: var(--text-primary);
+  display: grid; place-items: center; transition: all var(--dur-fast) var(--ease-out);
+}
+.fm-round:hover { border-color: var(--brand); color: var(--mint-600); }
+.fm-round:active { transform: scale(0.92); }
+.fm-round svg { width: 24px; height: 24px; }
+
+/* horizontal ruler picker */
+.fm-ruler {
+  position: relative; height: 92px; margin: 6px 0 2px; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+.fm-ruler__track { display: flex; align-items: flex-end; gap: 12px; height: 64px; position: absolute; left: 50%; bottom: 8px; transition: transform var(--dur-base) var(--ease-out); }
+.fm-ruler__tick { width: 2px; background: var(--border-strong); border-radius: 2px; flex: none; }
+.fm-ruler__tick.maj { background: var(--text-tertiary); }
+.fm-ruler__needle { position: absolute; left: 50%; top: 4px; bottom: 8px; width: 3px; transform: translateX(-50%); background: var(--accent); border-radius: 2px; }
+
+/* Draggable ("finger scroller") variant */
+.fm-scrollpick { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.fm-ruler--drag { width: 100%; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.fm-ruler--drag:active { cursor: grabbing; }
+.fm-ruler--drag .fm-ruler__track { transition: none; }
+.fm-ruler--drag:focus { outline: none; }
+.fm-ruler--drag:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 6px; border-radius: 10px; }
+
+/* ---------- Stat cards (summary) ---------- */
+.fm-statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fm-stat { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+.fm-stat__label { font-size: var(--fs-caption); font-weight: var(--fw-semibold); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
+.fm-stat__val { font-family: var(--font-display); font-weight: var(--fw-extra); font-size: 30px; line-height: 1; margin-top: 8px; }
+.fm-stat__val small { font-family: var(--font-body); font-size: 14px; font-weight: var(--fw-bold); color: var(--text-tertiary); }
+.fm-stat--accent { background: var(--teal-900); border-color: var(--teal-900); color: var(--sand-100); }
+.fm-stat--accent .fm-stat__label { color: var(--mint-300); }
+
+/* ---------- Goal-weight: Now → Goal journey + projection ---------- */
+.fm-journey { display: flex; align-items: stretch; gap: 8px; margin-top: 4px; }
+.fm-journey__node {
+  flex: 1; background: var(--bg-surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 10px; text-align: center;
+}
+.fm-journey__node--goal { border-color: var(--brand); background: var(--mint-100); }
+.fm-journey__k {
+  display: block; font-size: var(--fs-overline); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-overline); text-transform: uppercase; color: var(--text-tertiary);
+}
+.fm-journey__node--goal .fm-journey__k { color: var(--mint-600); }
+.fm-journey__v {
+  display: block; margin-top: 5px; font-family: var(--font-display);
+  font-weight: var(--fw-extra); font-size: 22px; letter-spacing: -0.02em; color: var(--text-primary);
+}
+.fm-journey__u { font-family: var(--font-body); font-size: 13px; font-weight: var(--fw-bold); color: var(--text-tertiary); }
+.fm-journey__arrow { display: grid; place-items: center; color: var(--accent); flex: none; width: 26px; }
+.fm-journey__arrow svg { width: 22px; height: 22px; }
+
+.fm-projcard {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--bg-inverse); color: var(--text-on-dark);
+  border-radius: var(--radius-lg); padding: 15px 18px;
+}
+.fm-projcard__icon {
+  width: 46px; height: 46px; border-radius: var(--radius-sm); flex: none;
+  background: rgba(242, 132, 58, 0.18); color: var(--orange-400); display: grid; place-items: center;
+}
+.fm-projcard__icon svg { width: 23px; height: 23px; }
+.fm-projcard__body { min-width: 0; }
+.fm-projcard__label {
+  font-size: var(--fs-overline); font-weight: var(--fw-bold); letter-spacing: var(--ls-overline);
+  text-transform: uppercase; color: var(--mint-300);
+}
+.fm-projcard__big { font-family: var(--font-display); font-weight: var(--fw-extra); font-size: 26px; line-height: 1.05; margin-top: 3px; }
+.fm-projcard__big small { font-size: 15px; font-weight: var(--fw-bold); color: var(--text-on-dark-dim); }
+.fm-projcard__by { font-size: var(--fs-body-s); font-weight: var(--fw-semibold); color: var(--text-on-dark-dim); margin-top: 3px; }
+
+/* ---------- Reveal: framed celebration figure + blueprint list ---------- */
+.fm-revealfig {
+  position: relative;
+  height: clamp(180px, 26vh, 218px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+.fm-revealfig::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 22px;
+  background: radial-gradient(ellipse at center, rgba(12, 39, 35, 0.18), rgba(12, 39, 35, 0) 70%);
+  z-index: 0;
+}
+.fm-revealfig__img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 10px 16px rgba(12, 39, 35, 0.14));
+}
+
+.fm-bplist {
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.fm-bprow { display: flex; align-items: center; gap: 13px; padding: 14px 15px; }
+.fm-bprow + .fm-bprow { border-top: 1px solid var(--border); }
+.fm-bprow__ic {
+  width: 38px; height: 38px; border-radius: var(--radius-sm); flex: none;
+  background: var(--mint-100); color: var(--mint-600); display: grid; place-items: center;
+}
+.fm-bprow__ic svg { width: 18px; height: 18px; }
+.fm-bprow__mid { flex: 1; min-width: 0; }
+.fm-bprow__k { display: block; font-family: var(--font-display); font-weight: var(--fw-bold); font-size: 13px; letter-spacing: -0.01em; color: var(--text-primary); }
+.fm-bprow__d { display: block; font-size: 11px; font-weight: var(--fw-medium); color: var(--text-tertiary); margin-top: 2px; }
+.fm-bprow__d.is-good { color: var(--mint-600); font-weight: var(--fw-semibold); }
+.fm-bprow__v {
+  font-family: var(--font-display); font-weight: var(--fw-extra); font-size: 25px; letter-spacing: -0.035em;
+  color: var(--text-primary); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
+}
+.fm-bprow__v small { font-family: var(--font-body); font-size: 11px; font-weight: var(--fw-bold); color: var(--text-tertiary); margin-left: 2px; }
+.fm-bprow--accent { background: linear-gradient(90deg, var(--mint-100), rgba(226, 248, 241, 0.35)); }
+.fm-bprow--accent .fm-bprow__ic { background: var(--orange-100); color: var(--orange-500); }
+.fm-bprow--accent .fm-bprow__k { color: var(--teal-700); }
+.fm-bprow--accent .fm-bprow__v { color: var(--teal-900); }
+
+/* ---------- Projection "future you" figure (framed hero) ---------- */
+.fm-projfig {
+  position: relative;
+  margin-top: 16px;
+  height: clamp(200px, 30vh, 268px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-on-dark);
+  background:
+    radial-gradient(72% 60% at 50% 116%, rgba(55, 201, 166, 0.32), rgba(55, 201, 166, 0) 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.fm-projfig__img {
+  display: block;
+  height: 97%;
+  width: auto;
+  max-width: 94%;
+  object-fit: contain;
+  object-position: bottom center;
+}
+.fm-projfig__tag {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 1;
+  font-size: var(--fs-overline);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--mint-300);
+  background: rgba(7, 48, 44, 0.42);
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ---------- Loader checklist ---------- */
+.fm-loadlist { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.fm-loaditem { display: flex; align-items: center; gap: 14px; font-weight: var(--fw-semibold); color: var(--text-on-dark-dim); transition: color var(--dur-base); }
+.fm-loaditem.is-done { color: var(--text-on-dark); }
+.fm-loaditem__dot { width: 28px; height: 28px; border-radius: var(--radius-pill); flex: none; display: grid; place-items: center; border: 2px solid rgba(245, 241, 232, 0.25); }
+.fm-loaditem.is-done .fm-loaditem__dot { background: var(--brand); border-color: var(--brand); color: var(--ink-900); }
+.fm-loaditem__dot svg { width: 15px; height: 15px; }
+
+/* ---------- Misc ---------- */
+.fm-logo-ring { width: 84px; height: 84px; }
+/* .fm-center and .fm-grow are replaced by the <ScreenBody center> prop
+   and the <ScreenGrow /> primitive. */
+.fm-spacer-sm { height: 16px; } .fm-spacer-md { height: 28px; } .fm-spacer-lg { height: 44px; }
+.fm-link { color: inherit; font-weight: var(--fw-bold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; background: none; border: none; padding: 0; }
+@keyframes fmSpin { to { transform: rotate(360deg); } }
+.fm-spin { animation: fmSpin 0.9s linear infinite; }
+@keyframes fmRise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.fm-rise { animation: fmRise var(--dur-slow) var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) { .fm-rise { animation: none; } }
+
+/* ---------- Projection transformation cards ---------- */
+.fm-transform {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+.fm-transform__card {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-on-dark);
+  background:
+    radial-gradient(72% 60% at 50% 116%, rgba(55, 201, 166, 0.08), rgba(55, 201, 166, 0) 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.fm-transform__card--after {
+  border: 2px solid var(--brand);
+  background:
+    radial-gradient(72% 60% at 50% 116%, rgba(55, 201, 166, 0.3), rgba(55, 201, 166, 0) 70%),
+    linear-gradient(180deg, rgba(55, 201, 166, 0.12), rgba(55, 201, 166, 0.02));
+  box-shadow: var(--ring-brand);
+}
+.fm-transform__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+}
+.fm-transform__tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  font-size: var(--fs-overline);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--mint-300);
+  background: rgba(7, 48, 44, 0.42);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.fm-transform__tag--after {
+  color: var(--ink-900);
+  background: var(--brand);
+}
+.fm-transform__arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--brand);
+  color: var(--ink-900);
+  box-shadow: var(--ring-brand);
+}
+.fm-transform__arrow svg {
+  width: 18px;
+  height: 18px;
+}

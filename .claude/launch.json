@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fitmonk-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 4000
+    },
+    {
+      "name": "fitmonk-reskin-4100",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "-p", "4100"],
+      "port": 4100
+    },
+    {
+      "name": "fitmonk-openers-verify",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev"],
+      "port": 4200,
+      "autoPort": true
+    }
+  ]
+}

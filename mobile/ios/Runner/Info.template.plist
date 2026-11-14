@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copy the entries below into ios/Runner/Info.plist AFTER running
+  `flutter create .` inside mobile/ (which generates the base project).
+  Only the keys unique to this shell are shown; keep Flutter's defaults
+  (CFBundleName, LSRequiresIPhoneOS, etc.) alongside them.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>Fitmonk</string>
+
+  <!-- Usage descriptions the WebView may prompt for -->
+  <key>NSCameraUsageDescription</key>
+  <string>Fitmonk uses the camera to log meals from photos and record progress.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Fitmonk uses the microphone for voice logging.</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Fitmonk uses your photo library to attach meal and progress pictures.</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>Fitmonk saves progress photos to your library.</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Fitmonk uses your location for outdoor workout tracking.</string>
+  <key>NSMotionUsageDescription</key>
+  <string>Fitmonk uses motion data to count steps and detect activity.</string>
+
+  <!-- FCM: allow background fetch for silent pushes -->
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>fetch</string>
+    <string>remote-notification</string>
+  </array>
+
+  <!-- WKWebView: allow inline media without a user gesture, matching
+       InAppWebViewSettings on the Dart side -->
+  <key>io.flutter.embedded_views_preview</key>
+  <true/>
+
+  <!-- Qonversion StoreKit 2 -->
+  <key>StoreKitPrivacyManifestPath</key>
+  <string>StoreKit/PrivacyInfo.xcprivacy</string>
+
+  <!-- App Transport Security: fitmonk.online is HTTPS, so keep ATS locked. -->
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <false/>
+  </dict>
+</dict>
+</plist>

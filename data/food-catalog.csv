@@ -1,0 +1,39 @@
+id,name,aliases,source,reference_url,tags,calories_per100g,protein_g_per100g,carbs_g_per100g,fats_g_per100g,fiber_g_per100g,calcium_mg_per100g,iron_mg_per100g,vitamin_b12_mcg_per100g,portion_label,portion_quantity,portion_unit,portion_grams,portion_aliases
+roti,Roti (whole-wheat flatbread),roti|chapati|phulka,dietfit-curated,,vegan|vegetarian,275,7.5,50,5,7.5,0,2.8,0,1 roti,1,roti,40,chapati|phulka
+paneer-sabji,Paneer Sabji (cottage cheese curry),paneer sabji|paneer subji|paneer curry|paneer bhurji,dietfit-curated,,vegetarian|dairy,122,7.8,5.6,7.2,1.7,133.3,0,0.2,1 bowl,1,bowl,180,cup
+paneer,Paneer (Indian cottage cheese),paneer|cottage cheese,dataset-import,,vegetarian|dairy,265,18.3,1.2,20.8,0,208,0.2,0.8,1 serving,1,serving,100,
+paneer,Paneer (Indian cottage cheese),paneer|cottage cheese,dataset-import,,vegetarian|dairy,265,18.3,1.2,20.8,0,208,0.2,0.8,100 gram,100,gram,100,
+paneer-sandwich,Paneer Sandwich (cottage cheese sandwich),paneer sandwich|grilled paneer sandwich|paneer toastie,dataset-import,,vegetarian|dairy,265,14,24,13,2,180,1.4,0.4,1 sandwich,1,serving,140,sandwich
+paneer-sandwich,Paneer Sandwich (cottage cheese sandwich),paneer sandwich|grilled paneer sandwich|paneer toastie,dataset-import,,vegetarian|dairy,265,14,24,13,2,180,1.4,0.4,100 gram,100,gram,100,
+milk,Milk,milk|glass of milk,dietfit-curated,,vegetarian|dairy,54.2,3.3,5,2.1,0,125,0,0.3,1 glass,1,glass,240,
+milk,Milk,milk|glass of milk,dietfit-curated,,vegetarian|dairy,54.2,3.3,5,2.1,0,125,0,0.3,1 cup,1,cup,240,
+soybean,Soybean,soybean|soya bean|soyabean,dietfit-curated,,vegan|vegetarian,173,18.2,8.4,8.5,6,102,5.1,0,100 gram,100,gram,100,
+soybean,Soybean,soybean|soya bean|soyabean,dietfit-curated,,vegan|vegetarian,173,18.2,8.4,8.5,6,102,5.1,0,1 bowl,1,bowl,172,cup
+soya-bean-salad,Soya Bean Salad,soya bean salad|soybean salad|soya salad|soy salad|soyabean salad,dietfit-curated,,vegan|vegetarian,170,16,12,6,5,0,3.2,0,100 gram,100,gram,100,
+soya-bean-salad,Soya Bean Salad,soya bean salad|soybean salad|soya salad|soy salad|soyabean salad,dietfit-curated,,vegan|vegetarian,170,16,12,6,5,0,3.2,0,1 bowl,1,bowl,120,cup
+cucumber,Cucumber,cucumber|kheera,dataset-import,,vegan|vegetarian,15,0.7,3.6,0.1,0.5,16,0.3,0,1 serving,1,serving,50,
+cucumber,Cucumber,cucumber|kheera,dataset-import,,vegan|vegetarian,15,0.7,3.6,0.1,0.5,16,0.3,0,100 gram,100,gram,100,
+onion,Onion,onion|pyaz,dataset-import,,vegan|vegetarian,40,1.1,9.3,0.1,1.7,23,0.2,0,1 serving,1,serving,30,
+onion,Onion,onion|pyaz,dataset-import,,vegan|vegetarian,40,1.1,9.3,0.1,1.7,23,0.2,0,100 gram,100,gram,100,
+dal,Dal (lentil stew),dal|daal|lentils,dietfit-curated,,vegan|vegetarian,100,5.6,13.9,2.2,3.9,0,1.2,0,1 bowl,1,bowl,180,cup
+rajma,Rajma (kidney bean curry),rajma|kidney beans|rajma curry|rajma chawal,dietfit-curated,,vegan|vegetarian,127.1,8.7,22.8,0.5,6.4,0,2.9,0,1 bowl,1,bowl,177,cup
+rice,Cooked Rice,rice|plain rice|steamed rice,dietfit-curated,,vegan|vegetarian,129.7,2.5,28.5,0,0.6,0,0,0,1 bowl,1,bowl,158,cup
+curd,Curd (yogurt),curd|dahi|yogurt,dietfit-curated,,vegetarian|dairy,40,2,3.3,2,0,73.5,0,0.2,1 bowl,1,bowl,245,cup
+oats,Oats Bowl,oatmeal|porridge|cooked oats|oats bowl,dietfit-curated,,vegan|vegetarian,81.2,2.6,13.7,1.7,2.1,0,0.6,0,1 bowl,1,bowl,234,cup
+banana,Banana,banana,dietfit-curated,,vegan|vegetarian,89,0.8,22.9,0,2.5,0,0,0,1 banana,1,banana,118,
+raw-oats,Raw Oats,oats|rolled oats|raw oats|dry oats,dataset-import,,vegan|vegetarian,379,13.15,67.7,6.52,10.1,52,4.25,0,1 serving,1,serving,40,
+raw-oats,Raw Oats,oats|rolled oats|raw oats|dry oats,dataset-import,,vegan|vegetarian,379,13.15,67.7,6.52,10.1,52,4.25,0,100 gram,100,gram,100,
+peanut-butter,Peanut Butter,peanut butter|groundnut butter,dataset-import,,vegan|vegetarian,588,25,20,50,6,43,1.9,0,1 tablespoon,1,tablespoon,16,tbsp|spoon|spoons
+peanut-butter,Peanut Butter,peanut butter|groundnut butter,dataset-import,,vegan|vegetarian,588,25,20,50,6,43,1.9,0,100 gram,100,gram,100,
+eggs,Eggs,egg|eggs|omelette|omelet|boiled egg,dietfit-curated,,meat,144,12,1,10,0,0,0,1.1,2 eggs,2,egg,100,
+eggs,Eggs,egg|eggs|omelette|omelet|boiled egg,dietfit-curated,,meat,144,12,1,10,0,0,0,1.1,1 egg,1,egg,50,
+chicken-curry,Chicken Curry,chicken curry|chicken|grilled chicken,dietfit-curated,,meat,150,16.9,5,6.9,0.6,0,0.8,0.6,1 bowl,1,bowl,160,cup
+fish-curry,Fish Curry,fish curry|fish fry|fish,dietfit-curated,,meat,146.7,16,4,6.7,0,0,0,1.5,1 serving,1,serving,150,
+idli,Idli (steamed rice-lentil cake),idli|idlis,dietfit-curated,,vegan|vegetarian,120,4,24,1,2,0,0,0,2 idli,2,idli,100,
+idli,Idli (steamed rice-lentil cake),idli|idlis,dietfit-curated,,vegan|vegetarian,120,4,24,1,2,0,0,0,1 idli,1,idli,50,
+dosa,Dosa (rice-lentil crepe),dosa|plain dosa|masala dosa,dietfit-curated,,vegan|vegetarian,126.7,2.7,18.7,4.7,1.3,0,0,0,1 dosa,1,dosa,150,
+besan-chilla,Besan Chilla (chickpea flour pancake),besan chilla|besan cheela|besan chila|besan ka chilla|besan ka cheela|gram flour chilla|chickpea flour chilla,dietfit-curated,,vegan|vegetarian,180,9,22,6,4,35,2.4,0,1 chilla,1,chilla,80,
+besan-chilla,Besan Chilla (chickpea flour pancake),besan chilla|besan cheela|besan chila|besan ka chilla|besan ka cheela|gram flour chilla|chickpea flour chilla,dietfit-curated,,vegan|vegetarian,180,9,22,6,4,35,2.4,0,100 gram,100,gram,100,
+semolina-pasta,Semolina Pasta,semolina pasta|cooked semolina pasta|boiled semolina pasta|plain semolina pasta,dataset-import,,vegan|vegetarian,157,5.8,31,1.2,1.8,8,1.1,0,1 bowl,1,bowl,150,cup
+semolina-pasta,Semolina Pasta,semolina pasta|cooked semolina pasta|boiled semolina pasta|plain semolina pasta,dataset-import,,vegan|vegetarian,157,5.8,31,1.2,1.8,8,1.1,0,100 gram,100,gram,100,
+salad,Salad,salad|veg salad|vegetable salad,dietfit-curated,,vegan|vegetarian,58.3,1.7,8.3,1.7,3.3,0,0.7,0,1 bowl,1,bowl,120,cup
