@@ -21,8 +21,12 @@ class Env {
     'www.fitmonk.online',
   ];
 
+  /// The host the shell was built to load (e.g. a staging or LAN dev server
+  /// passed with --dart-define=FITMONK_SHELL_URL) is always internal.
+  static final String _shellHost = Uri.parse(shellUrl).host;
+
   static bool isInternalUrl(Uri uri) {
     if (uri.host.isEmpty) return true;
-    return allowedHosts.contains(uri.host);
+    return uri.host == _shellHost || allowedHosts.contains(uri.host);
   }
 }

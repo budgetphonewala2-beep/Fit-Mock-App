@@ -128,14 +128,16 @@ definitions:
         APP_ID=$(app-store-connect apps list --bundle-id-identifier "$BUNDLE_ID" --json \
           | python3 -c 'import json,os,sys; b=os.environ["BUNDLE_ID"]; print(next((a["id"] for a in json.load(sys.stdin) if a["attributes"]["bundleId"]==b), ""))')
         if [ -z "$APP_ID" ]; then
-          echo "No App Store Connect app for $BUNDLE_ID. Create it first:" >&2
-          echo "App Store Connect -> Apps -> + New App -> bundle id $BUNDLE_ID" >&2
-          exit 1
+          # The IPA still builds (and proves signing works); only the upload
+          # step needs the app record. The bundle id is registered by now, so
+          # it shows up in App Store Connect's "New App" form.
+          echo "WARNING: no App Store Connect app for $BUNDLE_ID yet."
+          echo "WARNING: Create it: App Store Connect -> Apps -> + -> New App -> bundle id $BUNDLE_ID"
+          BUILD_NUMBER=${PROJECT_BUILD_NUMBER:-1}
+        else
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_ID" || echo 0)
+          BUILD_NUMBER=$(( ${LATEST:-0} + 1 ))
         fi
-        echo "APP_STORE_APP_ID=$APP_ID" >> "$CM_ENV"
-
-        LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_ID" || echo 0)
-        BUILD_NUMBER=$(( ${LATEST:-0} + 1 ))
         BUILD_NAME=$(grep '^version:' pubspec.yaml | sed -E 's/version: *([0-9.]+).*/\1/')
         echo "Building $BUILD_NAME ($BUILD_NUMBER)"
 
@@ -151,7 +153,7 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 90
     integrations:
-      app_store_connect: __ASC_INTEGRATION_NAME__
+      app_store_connect: codemagic
     environment: *ios_env
     scripts:
       - *verify_web
@@ -174,7 +176,7 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 90
     integrations:
-      app_store_connect: __ASC_INTEGRATION_NAME__
+      app_store_connect: codemagic
     environment: *ios_env
     scripts:
       - *verify_web
