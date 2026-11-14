@@ -34,9 +34,10 @@ Apple developer news, November 2026.
 
 | Field | Value |
 |---|---|
-| Name | Fitmonk |
+| Name | Fitmonk: Diet & Fitness Coach |
+| Apple ID (App Store Connect) | 6834729658 |
 | Subtitle (≤30) | AI workout & diet coach |
-| Bundle ID | app.fitmonk.shell |
+| Bundle ID | app.fitmonk.shell (capabilities: Push, Sign in with Apple, In-App Purchase) |
 | SKU | fitmonk-ios |
 | Primary category | Health & Fitness |
 | Secondary category | Food & Drink (optional) |

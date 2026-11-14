@@ -93,6 +93,9 @@ definitions:
         else
           echo "WARNING: GOOGLE_SERVICE_INFO_PLIST is not set. Firebase (push, analytics)"
           echo "WARNING: and Google Sign-In will be unavailable on iOS in this build."
+          # No Google client id: ship without the Google URL scheme rather than
+          # a placeholder one.
+          /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" ios/Runner/Info.plist || true
         fi
 
         # Store builds must use the production APNs environment.
@@ -121,6 +124,11 @@ definitions:
             --name "Fitmonk" --platform IOS --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
           echo "Registered bundle id $BUNDLE_ID ($BUNDLE_RES_ID)"
         fi
+        # Note: Apple only enables Sign In with Apple when a consent setting is
+        # sent, which this CLI doesn't do. It was enabled once directly through
+        # the App Store Connect API (APPLE_ID_AUTH + PRIMARY_APP_CONSENT); on a
+        # brand-new bundle id, enable it in the Developer portal before the
+        # first signed build.
         app-store-connect bundle-ids enable-capabilities "$BUNDLE_RES_ID" \
           --capability "Push Notifications" "Sign In with Apple" || \
           echo "Capabilities already enabled or not changeable via API; continuing."
