@@ -56,8 +56,9 @@ definitions:
         cd "$CM_BUILD_DIR/mobile"
 
         if [ -z "${QONVERSION_PROJECT_KEY:-}" ]; then
-          echo "WARNING: QONVERSION_PROJECT_KEY is not set. In-app purchases will be"
-          echo "WARNING: disabled in this build (paywall shows 'unavailable')."
+          # iOS purchases go straight through StoreKit; the key is only used by
+          # the Android (Play Billing via Qonversion) side of the shell.
+          echo "Note: QONVERSION_PROJECT_KEY not set (only needed for Android purchases)."
         fi
         GOOGLE_IOS_CLIENT_ID=""
         PLIST="ios/Runner/GoogleService-Info.plist"
