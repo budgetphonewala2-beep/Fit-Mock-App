@@ -175,7 +175,9 @@ class Bridge {
     }
     try {
       // The page can call in before the native services finish starting.
-      await servicesReady;
+      // Never more than a few seconds: a stuck service must not freeze
+      // sign-in or purchases (each handler copes with an unready service).
+      await servicesReady.timeout(const Duration(seconds: 8), onTimeout: () {});
       final result = await handler(params);
       if (Env.debugBridge) debugPrint('[bridge] ← $method $result');
       return result;

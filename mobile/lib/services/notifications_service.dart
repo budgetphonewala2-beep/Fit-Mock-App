@@ -94,8 +94,11 @@ class NotificationsService {
         });
       });
 
-      final initialMessage =
-          await FirebaseMessaging.instance.getInitialMessage();
+      // Bounded: on iOS this waits for the plugin to have seen app launch,
+      // and must never stall the rest of startup if it didn't.
+      final initialMessage = await FirebaseMessaging.instance
+          .getInitialMessage()
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
       if (initialMessage != null) {
         _tapController.add({
           'source': 'remote',

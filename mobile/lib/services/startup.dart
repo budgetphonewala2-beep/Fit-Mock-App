@@ -19,16 +19,24 @@ Future<void> get servicesReady => _servicesReady.future;
 /// immediately. Same order as before: each service needs Firebase.
 Future<void> initServices() async {
   try {
-    try {
-      await Firebase.initializeApp();
-    } catch (e, s) {
-      debugPrint('Firebase init failed: $e\n$s');
-    }
-
-    await AnalyticsService.instance.init();
-    await PurchasesService.instance.init();
-    await NotificationsService.instance.init();
+    await _step('Firebase', Firebase.initializeApp());
+    await _step('Analytics', AnalyticsService.instance.init());
+    await _step('Purchases', PurchasesService.instance.init());
+    await _step('Notifications', NotificationsService.instance.init());
   } finally {
     if (!_servicesReady.isCompleted) _servicesReady.complete();
+  }
+}
+
+/// One startup step, bounded in time. A plugin call that never answers (as
+/// firebase_messaging's getInitialMessage did under the iOS scene lifecycle)
+/// must not hold every bridge call — sign-in, purchases — hostage.
+Future<void> _step(String name, Future<Object?> work) async {
+  try {
+    await work.timeout(const Duration(seconds: 6));
+  } on TimeoutException {
+    debugPrint('Startup: $name did not finish within 6s; continuing');
+  } catch (e, s) {
+    debugPrint('Startup: $name failed: $e\n$s');
   }
 }
